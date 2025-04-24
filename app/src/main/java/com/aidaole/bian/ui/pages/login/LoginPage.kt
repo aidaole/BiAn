@@ -1,4 +1,4 @@
-package com.aidaole.bian.ui.screens.login
+package com.aidaole.bian.ui.pages.login
 
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
@@ -49,14 +49,14 @@ import com.aidaole.bian.ui.theme.InputFieldBg
 
 @Preview
 @Composable
-private fun LoginScreenPrev() {
+private fun LoginPagePrev() {
     BiAnTheme  {
-        LoginScreen()
+        LoginPage()
     }
 }
 
 @Composable
-fun LoginScreen(
+fun LoginPage(
     modifier: Modifier = Modifier, onCloseClicked: () -> Unit = {}, onCallClicked: () -> Unit = {}
 ) {
 

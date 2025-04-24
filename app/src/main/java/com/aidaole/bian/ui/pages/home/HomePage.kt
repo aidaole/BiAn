@@ -1,4 +1,4 @@
-package com.aidaole.bian.ui.screens.home
+package com.aidaole.bian.ui.pages.home
 
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Box
@@ -14,7 +14,7 @@ import androidx.compose.ui.unit.dp
 import com.aidaole.bian.R
 
 @Composable
-fun HomeScreen(modifier: Modifier = Modifier, onLoginClicked: () -> Unit = {}) {
+fun HomePage(modifier: Modifier = Modifier, onLoginClicked: () -> Unit = {}) {
     Box(modifier = modifier.fillMaxSize()) {
         Image(painter = painterResource(R.drawable.screen_home), contentDescription = "home_content")
 

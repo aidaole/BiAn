@@ -17,10 +17,10 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navOptions
-import com.aidaole.bian.ui.screens.home.HomeScreen
+import com.aidaole.bian.ui.pages.home.HomePage
 import com.aidaole.bian.ui.theme.BiAnTheme
-import com.aidaole.bian.ui.screens.language.LanguageChooseScreen
-import com.aidaole.bian.ui.screens.login.LoginScreen
+import com.aidaole.bian.ui.pages.language.LanguageChoosePage
+import com.aidaole.bian.ui.pages.login.LoginPage
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -41,7 +41,7 @@ fun MainRoute(modifier: Modifier) {
     val navController = rememberNavController()
     NavHost(navController, startDestination = "home") {
         composable("home") {
-            HomeScreen(
+            HomePage(
                 onLoginClicked = {
                     navController.navigate("login", navOptions = navOptions {
                         anim {
@@ -52,7 +52,7 @@ fun MainRoute(modifier: Modifier) {
             )
         }
         composable("language_choose") {
-            LanguageChooseScreen()
+            LanguageChoosePage()
         }
         composable("login",
             enterTransition = {
@@ -67,7 +67,7 @@ fun MainRoute(modifier: Modifier) {
                     animationSpec = tween(200),
                 )
             }) {
-            LoginScreen(onCloseClicked = {
+            LoginPage(onCloseClicked = {
                 navController.navigateUp()
             })
         }
