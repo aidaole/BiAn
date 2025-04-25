@@ -7,11 +7,17 @@ import androidx.activity.enableEdgeToEdge
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.slideInHorizontally
 import androidx.compose.animation.slideOutHorizontally
+import androidx.compose.foundation.Image
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
+import androidx.compose.material3.Button
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
@@ -29,7 +35,11 @@ class MainActivity : ComponentActivity() {
         setContent {
             BiAnTheme {
                 Scaffold(modifier = Modifier.fillMaxSize()) { innerPadding ->
-                    MainRoute(Modifier.padding(innerPadding))
+                    Box(modifier = Modifier.fillMaxSize()) {
+                        Image(painter = painterResource(R.drawable.screen_home), contentDescription = "home_content")
+
+                        MainRoute(Modifier.padding(innerPadding))
+                    }
                 }
             }
         }
@@ -42,6 +52,7 @@ fun MainRoute(modifier: Modifier) {
     NavHost(navController, startDestination = "home") {
         composable("home") {
             HomePage(
+                modifier = modifier,
                 onLoginClicked = {
                     navController.navigate("login", navOptions = navOptions {
                         anim {
