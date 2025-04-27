@@ -23,10 +23,10 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navOptions
-import com.aidaole.bian.ui.pages.home.HomePage
-import com.aidaole.bian.ui.theme.BiAnTheme
-import com.aidaole.bian.ui.pages.language.LanguageChoosePage
-import com.aidaole.bian.ui.pages.login.LoginPage
+import com.aidaole.bian.features.home.HomePage
+import com.aidaole.bian.core.theme.BiAnTheme
+import com.aidaole.bian.features.language.LanguageChoosePage
+import com.aidaole.bian.features.login.LoginPage
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -34,12 +34,8 @@ class MainActivity : ComponentActivity() {
         enableEdgeToEdge()
         setContent {
             BiAnTheme {
-                Scaffold(modifier = Modifier.fillMaxSize()) { innerPadding ->
-                    Box(modifier = Modifier.fillMaxSize()) {
-                        Image(painter = painterResource(R.drawable.screen_home), contentDescription = "home_content")
-
-                        MainRoute(Modifier.padding(innerPadding))
-                    }
+                Box(modifier = Modifier.fillMaxSize()) {
+                    MainRoute()
                 }
             }
         }
@@ -47,12 +43,12 @@ class MainActivity : ComponentActivity() {
 }
 
 @Composable
-fun MainRoute(modifier: Modifier) {
+fun MainRoute() {
     val navController = rememberNavController()
     NavHost(navController, startDestination = "home") {
         composable("home") {
             HomePage(
-                modifier = modifier,
+                modifier = Modifier,
                 onLoginClicked = {
                     navController.navigate("login", navOptions = navOptions {
                         anim {
@@ -89,7 +85,7 @@ fun MainRoute(modifier: Modifier) {
 @Preview(showBackground = true)
 @Composable
 fun MainRoutePreview() {
-    BiAnTheme  {
-        MainRoute(modifier = Modifier)
+    BiAnTheme {
+        MainRoute()
     }
 }

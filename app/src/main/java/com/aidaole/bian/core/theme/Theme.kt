@@ -1,4 +1,4 @@
-package com.aidaole.bian.ui.theme
+package com.aidaole.bian.core.theme
 
 import android.os.Build
 import androidx.compose.foundation.isSystemInDarkTheme

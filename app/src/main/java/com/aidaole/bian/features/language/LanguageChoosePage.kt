@@ -1,4 +1,4 @@
-package com.aidaole.bian.ui.pages.language
+package com.aidaole.bian.features.language
 
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier

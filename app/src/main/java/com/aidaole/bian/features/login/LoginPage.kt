@@ -1,4 +1,4 @@
-package com.aidaole.bian.ui.pages.login
+package com.aidaole.bian.features.login
 
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
@@ -43,9 +43,9 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.aidaole.bian.R
-import com.aidaole.bian.ui.theme.BiAnTheme
-import com.aidaole.bian.ui.theme.ButtonBorderColor
-import com.aidaole.bian.ui.theme.InputFieldBg
+import com.aidaole.bian.core.theme.BiAnTheme
+import com.aidaole.bian.core.theme.ButtonBorderColor
+import com.aidaole.bian.core.theme.InputFieldBg
 
 @Preview
 @Composable

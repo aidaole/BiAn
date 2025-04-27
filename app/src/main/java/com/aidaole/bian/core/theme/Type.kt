@@ -1,4 +1,4 @@
-package com.aidaole.bian.ui.theme
+package com.aidaole.bian.core.theme
 
 import androidx.compose.material3.Typography
 import androidx.compose.ui.text.TextStyle
