@@ -3,9 +3,11 @@ package com.aidaole.bian.features.home
 import android.annotation.SuppressLint
 import android.app.Application
 import android.util.Log
+import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -16,9 +18,8 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.pager.HorizontalPager
+import androidx.compose.foundation.pager.PagerState
 import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicTextField
@@ -81,7 +82,7 @@ private fun HomePagePreview() {
 
 private const val TAG = "HomePage"
 
-@OptIn(ExperimentalMaterial3Api::class)
+@OptIn(ExperimentalMaterial3Api::class, ExperimentalFoundationApi::class)
 @SuppressLint("UnusedMaterial3ScaffoldPaddingParameter")
 @Composable
 fun HomePage(
@@ -111,7 +112,7 @@ fun HomePage(
             SearchBarIcon(imageVector = Icons.Default.AddCard)
         })
     }, content = { innerPadding ->
-        LazyColumn (
+        LazyColumn(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(innerPadding)
@@ -141,21 +142,36 @@ fun HomePage(
                     )
                 )
             }
-            item {
-                IconInfosWidget(
+            stickyHeader {
+                IconInfosTabRow(
                     tabTitles = listOf("火币", "火币"),
-                    listOf(
+                    pagerState = rememberPagerState(0, 0f) { 2 },
+                    onTabSelected = { index ->
+                        // Implement tab selection logic
+                    }
+                )
+            }
+            item {
+                IconInfosPager(
+                    pagerState = rememberPagerState(0, 0f) { 2 },
+                    tabContents = listOf(
                         {
                             LazyColumn {
-                                items(20) {
-                                    Text("Index $1")
+                                items(50) {
+                                    Text("Tab 2 Content", modifier
+                                        .height(50.dp)
+                                        .padding(5.dp)
+                                    )
                                 }
                             }
                         },
                         {
                             LazyColumn {
-                                items(20) {
-                                    Text("Index $1")
+                                items(50) {
+                                    Text("Tab 2 Content", modifier
+                                        .height(50.dp)
+                                        .padding(5.dp)
+                                    )
                                 }
                             }
                         }
@@ -268,36 +284,36 @@ fun SearchBarIcon(
 }
 
 @Composable
-fun IconInfosWidget(
+fun IconInfosTabRow(
     tabTitles: List<String>,
-    tabContents: List<@Composable () -> Unit>,
-    modifier: Modifier = Modifier
+    pagerState: PagerState,
+    onTabSelected: (Int) -> Unit
 ) {
-    val pagerState = rememberPagerState(0, 0f) {
-        tabTitles.size
-    }
-
-    val coroutineScope = rememberCoroutineScope()
-
-    Column(modifier = modifier) {
-        TabRow(selectedTabIndex = pagerState.currentPage) {
-            tabTitles.forEachIndexed { index, title ->
-                Tab(
-                    selected = pagerState.currentPage == index,
-                    onClick = {
-                        coroutineScope.launch {
-                            pagerState.animateScrollToPage(index)
-                        }
-                    },
-                    text = { Text(title) }
-                )
-            }
+    TabRow(selectedTabIndex = pagerState.currentPage) {
+        tabTitles.forEachIndexed { index, title ->
+            Tab(
+                selected = pagerState.currentPage == index,
+                onClick = { onTabSelected(index) },
+                text = { Text(title) }
+            )
         }
+    }
+}
+
+@Composable
+fun IconInfosPager(
+    pagerState: PagerState,
+    tabContents: List<@Composable () -> Unit>
+) {
+    BoxWithConstraints(Modifier.fillMaxWidth()) {
+        val appBarHeight = 56.dp
+        val tabRowHeight = 48.dp
+        val pagerHeight = maxHeight - appBarHeight - tabRowHeight
+
         HorizontalPager(
-            state = pagerState,
-            modifier = Modifier
+            state = pagerState, modifier = Modifier
                 .fillMaxWidth()
-                .height(800.dp)
+                .height(pagerHeight)
         ) { page ->
             tabContents[page]()
         }
