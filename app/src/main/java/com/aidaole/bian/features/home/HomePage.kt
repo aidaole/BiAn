@@ -17,6 +17,9 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.LazyListState
+import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.PagerState
 import androidx.compose.foundation.pager.rememberPagerState
@@ -43,6 +46,9 @@ import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.State
 import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.derivedStateOf
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -97,6 +103,10 @@ fun HomePage(
     val coroutineScope = rememberCoroutineScope()
     val configuration = LocalConfiguration.current
     val screenHeight = configuration.screenHeightDp.dp
+    val listState = rememberLazyListState()
+    val isTabRowSticky by remember {
+        derivedStateOf { listState.firstVisibleItemIndex >= 1 }
+    }
 
     Scaffold(modifier = modifier.nestedScroll(topAppBarScrollBehavior.nestedScrollConnection), topBar = {
         TopAppBar(modifier = Modifier.fillMaxWidth(),
@@ -125,6 +135,7 @@ fun HomePage(
             })
     }) { innerPadding ->
         LazyColumn(
+            state = listState,
             modifier = Modifier
                 .fillMaxSize()
                 .padding(innerPadding)
@@ -165,27 +176,40 @@ fun HomePage(
             item {
                 // 计算Pager高度
                 val pagerHeight = screenHeight
-                IconInfosPager(pagerState = pagerState, tabContents = listOf({
-                    LazyColumn(Modifier.fillMaxSize()) {
-                        items(50) {
-                            Text(
-                                "火币内容 $it", Modifier
-                                    .height(50.dp)
-                                    .padding(5.dp)
-                            )
+                IconInfosPager(
+                    pagerState = pagerState,
+                    tabContents = listOf(
+                        {
+                            LazyColumn(
+                                modifier = Modifier.fillMaxSize(),
+                                userScrollEnabled = isTabRowSticky
+                            ) {
+                                items(50) {
+                                    Text(
+                                        "火币内容 $it", Modifier
+                                            .height(50.dp)
+                                            .padding(5.dp)
+                                    )
+                                }
+                            }
+                        },
+                        {
+                            LazyColumn(
+                                modifier = Modifier.fillMaxSize(),
+                                userScrollEnabled = isTabRowSticky
+                            ) {
+                                items(50) {
+                                    Text(
+                                        "币安内容 $it", Modifier
+                                            .height(50.dp)
+                                            .padding(5.dp)
+                                    )
+                                }
+                            }
                         }
-                    }
-                }, {
-                    LazyColumn(Modifier.fillMaxSize()) {
-                        items(50) {
-                            Text(
-                                "币安内容 $it", Modifier
-                                    .height(50.dp)
-                                    .padding(5.dp)
-                            )
-                        }
-                    }
-                }), modifier = Modifier.height(pagerHeight))
+                    ),
+                    modifier = Modifier.height(pagerHeight)
+                )
             }
         }
     }
