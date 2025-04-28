@@ -17,8 +17,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.LazyListState
-import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.PagerState
@@ -54,16 +52,18 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.input.nestedscroll.NestedScrollConnection
+import androidx.compose.ui.input.nestedscroll.NestedScrollSource
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.platform.LocalConfiguration
-import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
-import androidx.compose.ui.unit.Dp
+import androidx.compose.ui.unit.Velocity
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
@@ -94,7 +94,9 @@ private const val TAG = "HomePage"
 @SuppressLint("UnusedMaterial3ScaffoldPaddingParameter")
 @Composable
 fun HomePage(
-    homeViewModel: HomeViewModel = hiltViewModel(), modifier: Modifier = Modifier, onLoginClicked: () -> Unit = {}
+    homeViewModel: HomeViewModel = hiltViewModel(),
+    modifier: Modifier = Modifier,
+    onLoginClicked: () -> Unit = {}
 ) {
     val topAppBarScrollBehavior = TopAppBarDefaults.pinnedScrollBehavior()
     val stockItems = homeViewModel.stockItems.collectAsState()
@@ -104,36 +106,77 @@ fun HomePage(
     val configuration = LocalConfiguration.current
     val screenHeight = configuration.screenHeightDp.dp
     val listState = rememberLazyListState()
-    val isTabRowSticky by remember {
-        derivedStateOf { listState.firstVisibleItemIndex >= 1 }
+
+    // 监听 stickyHeader 是否吸顶
+    val isStickyHeaderPinned by remember {
+        derivedStateOf {
+            val layoutInfo = listState.layoutInfo
+            val stickyHeaderItem = layoutInfo.visibleItemsInfo.find { it.key == "stickyHeader" }
+            val isPinned = stickyHeaderItem != null && stickyHeaderItem.offset <= layoutInfo.viewportStartOffset
+            Log.d(
+                TAG,
+                "isStickyHeaderPinned: $isPinned, offset: ${stickyHeaderItem?.offset}, viewportStart: ${layoutInfo.viewportStartOffset}"
+            )
+            isPinned
+        }
     }
 
-    Scaffold(modifier = modifier.nestedScroll(topAppBarScrollBehavior.nestedScrollConnection), topBar = {
-        TopAppBar(modifier = Modifier.fillMaxWidth(),
-            title = { BiAnSearchBar() },
-            scrollBehavior = topAppBarScrollBehavior,
-            navigationIcon = {
-                Row {
-                    Spacer(Modifier.width(10.dp))
-                    Icon(
-                        modifier = modifier
-                            .size(35.dp)
-                            .padding(5.dp),
-                        contentDescription = "",
-                        painter = painterResource(R.drawable.google),
-                        tint = Color.Unspecified
-                    )
-                }
+    // 检测是否在滑动
+    val isScrolling by remember {
+        derivedStateOf { listState.isScrollInProgress }
+    }
 
-            },
-            actions = {
-                SearchBarIcon(imageVector = Icons.Outlined.CameraAlt)
-                SearchBarIcon(imageVector = Icons.Default.Call)
-                SearchBarIcon(imageVector = Icons.Outlined.Email)
-                SearchBarIcon(imageVector = Icons.Default.AddCard)
-                Spacer(Modifier.width(20.dp))
-            })
-    }) { innerPadding ->
+
+    // 自定义 NestedScrollConnection 用于内层 LazyColumn
+    val nestedScrollConnection = remember {
+        object : NestedScrollConnection {
+            override fun onPreScroll(available: Offset, source: NestedScrollSource): Offset {
+                return if (isStickyHeaderPinned) {
+                    // 吸顶后，内层 LazyColumn 消耗滑动事件
+                    available
+                } else {
+                    // 未吸顶，内层不响应滑动，外层 LazyColumn 处理
+                    Offset.Zero
+                }
+            }
+
+            override suspend fun onPreFling(available: Velocity): Velocity {
+                // 控制 fling 行为
+                return if (isStickyHeaderPinned) available else Velocity.Zero
+            }
+        }
+    }
+
+    Scaffold(
+        modifier = modifier.nestedScroll(topAppBarScrollBehavior.nestedScrollConnection),
+        topBar = {
+            TopAppBar(
+                modifier = Modifier.fillMaxWidth(),
+                title = { BiAnSearchBar() },
+                scrollBehavior = topAppBarScrollBehavior,
+                navigationIcon = {
+                    Row {
+                        Spacer(Modifier.width(10.dp))
+                        Icon(
+                            modifier = modifier
+                                .size(35.dp)
+                                .padding(5.dp),
+                            contentDescription = "",
+                            painter = painterResource(R.drawable.google),
+                            tint = Color.Unspecified
+                        )
+                    }
+                },
+                actions = {
+                    SearchBarIcon(imageVector = Icons.Outlined.CameraAlt)
+                    SearchBarIcon(imageVector = Icons.Default.Call)
+                    SearchBarIcon(imageVector = Icons.Outlined.Email)
+                    SearchBarIcon(imageVector = Icons.Default.AddCard)
+                    Spacer(Modifier.width(20.dp))
+                }
+            )
+        }
+    ) { innerPadding ->
         LazyColumn(
             state = listState,
             modifier = Modifier
@@ -147,12 +190,17 @@ fun HomePage(
                     Spacer(Modifier.height(10.dp))
                     Text(
                         "欢迎探索数字资产的世界!",
-                        style = MaterialTheme.typography.titleLarge.copy(fontWeight = FontWeight.W800, fontSize = 28.sp)
+                        style = MaterialTheme.typography.titleLarge.copy(
+                            fontWeight = FontWeight.W800,
+                            fontSize = 28.sp
+                        )
                     )
                     Spacer(Modifier.height(30.dp))
-                    Button(modifier = Modifier.width(180.dp),
+                    Button(
+                        modifier = Modifier.width(180.dp),
                         shape = RoundedCornerShape(10.dp),
-                        onClick = { onLoginClicked.invoke() }) {
+                        onClick = { onLoginClicked.invoke() }
+                    ) {
                         Text("注册/登陆", style = MaterialTheme.typography.bodyMedium)
                     }
                     Spacer(Modifier.height(30.dp))
@@ -163,30 +211,37 @@ fun HomePage(
                         modifier = Modifier.fillMaxWidth(),
                         textAlign = TextAlign.Center,
                         style = MaterialTheme.typography.bodyMedium.copy(
-                            color = MaterialTheme.colorScheme.primary, fontWeight = FontWeight.W800
+                            color = MaterialTheme.colorScheme.primary,
+                            fontWeight = FontWeight.W800
                         )
                     )
                 }
             }
-            stickyHeader {
-                IconInfosTabRow(tabTitles = tabTitles, pagerState = pagerState, onTabSelected = { index ->
-                    coroutineScope.launch { pagerState.animateScrollToPage(index) }
-                })
+            stickyHeader(key = "stickyHeader") {
+                IconInfosTabRow(
+                    tabTitles = tabTitles,
+                    pagerState = pagerState,
+                    onTabSelected = { index ->
+                        coroutineScope.launch { pagerState.animateScrollToPage(index) }
+                    }
+                )
             }
             item {
-                // 计算Pager高度
-                val pagerHeight = screenHeight
+                // 计算Pager高度，考虑内边距
+                val pagerHeight = screenHeight - innerPadding.calculateTopPadding()
                 IconInfosPager(
                     pagerState = pagerState,
                     tabContents = listOf(
                         {
                             LazyColumn(
-                                modifier = Modifier.fillMaxSize(),
-                                userScrollEnabled = isTabRowSticky
+                                modifier = Modifier
+                                    .fillMaxSize(),
+                                userScrollEnabled = isStickyHeaderPinned
                             ) {
                                 items(50) {
                                     Text(
-                                        "火币内容 $it", Modifier
+                                        "火币内容 $it",
+                                        Modifier
                                             .height(50.dp)
                                             .padding(5.dp)
                                     )
@@ -195,12 +250,14 @@ fun HomePage(
                         },
                         {
                             LazyColumn(
-                                modifier = Modifier.fillMaxSize(),
-                                userScrollEnabled = isTabRowSticky
+                                modifier = Modifier
+                                    .fillMaxSize(),
+                                userScrollEnabled = isStickyHeaderPinned
                             ) {
                                 items(50) {
                                     Text(
-                                        "币安内容 $it", Modifier
+                                        "币安内容 $it",
+                                        Modifier
                                             .height(50.dp)
                                             .padding(5.dp)
                                     )
@@ -336,11 +393,4 @@ fun IconInfosPager(
     ) { page ->
         tabContents[page]()
     }
-}
-
-// 辅助函数：px转dp
-@Composable
-fun Int.toDp(): Dp {
-    val density = LocalDensity.current
-    return with(density) { this@toDp.toDp() }
 }
