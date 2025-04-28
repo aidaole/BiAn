@@ -134,7 +134,10 @@ fun HomePage(
                     }
                     Spacer(Modifier.height(30.dp))
                 }
-                itemsIndexed(stockItems.value) { index, it ->
+                itemsIndexed(
+                    stockItems.value,
+                    contentType = { _, _ -> 1 }
+                ) { index, it ->
                     StockItemWidget(index, it)
                 }
             }
