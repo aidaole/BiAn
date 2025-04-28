@@ -17,6 +17,8 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.LazyListState
+import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.PagerState
@@ -44,10 +46,11 @@ import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.State
 import androidx.compose.runtime.collectAsState
-import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
@@ -90,6 +93,35 @@ private fun HomePagePreview() {
 
 private const val TAG = "HomePage"
 
+private class HomePageNestedScrollConnection(
+    private val onStickyHeaderPinned: (Boolean) -> Unit,
+    private val listState: LazyListState
+) : NestedScrollConnection {
+    override fun onPreScroll(available: Offset, source: NestedScrollSource): Offset {
+        // 获取 stickyHeader 的位置信息
+        val layoutInfo = listState.layoutInfo
+        val stickyHeaderItem = layoutInfo.visibleItemsInfo.find { it.key == "stickyHeader" }
+        val isPinned =
+            stickyHeaderItem != null && stickyHeaderItem.offset <= layoutInfo.viewportStartOffset
+        onStickyHeaderPinned(isPinned)
+        return Offset.Zero
+    }
+
+    override fun onPostScroll(
+        consumed: Offset,
+        available: Offset,
+        source: NestedScrollSource
+    ): Offset {
+        // 获取 stickyHeader 的位置信息
+        val layoutInfo = listState.layoutInfo
+        val stickyHeaderItem = layoutInfo.visibleItemsInfo.find { it.key == "stickyHeader" }
+        val isPinned =
+            stickyHeaderItem != null && stickyHeaderItem.offset <= layoutInfo.viewportStartOffset
+        onStickyHeaderPinned(isPinned)
+        return Offset.Zero
+    }
+}
+
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalFoundationApi::class)
 @SuppressLint("UnusedMaterial3ScaffoldPaddingParameter")
 @Composable
@@ -106,49 +138,18 @@ fun HomePage(
     val configuration = LocalConfiguration.current
     val screenHeight = configuration.screenHeightDp.dp
     val listState = rememberLazyListState()
+    var isStickyHeaderPinned by remember { mutableStateOf(false) }
 
-    // 监听 stickyHeader 是否吸顶
-    val isStickyHeaderPinned by remember {
-        derivedStateOf {
-            val layoutInfo = listState.layoutInfo
-            val stickyHeaderItem = layoutInfo.visibleItemsInfo.find { it.key == "stickyHeader" }
-            val isPinned = stickyHeaderItem != null && stickyHeaderItem.offset <= layoutInfo.viewportStartOffset
-            Log.d(
-                TAG,
-                "isStickyHeaderPinned: $isPinned, offset: ${stickyHeaderItem?.offset}, viewportStart: ${layoutInfo.viewportStartOffset}"
-            )
-            isPinned
-        }
-    }
-
-    // 检测是否在滑动
-    val isScrolling by remember {
-        derivedStateOf { listState.isScrollInProgress }
-    }
-
-
-    // 自定义 NestedScrollConnection 用于内层 LazyColumn
-    val nestedScrollConnection = remember {
-        object : NestedScrollConnection {
-            override fun onPreScroll(available: Offset, source: NestedScrollSource): Offset {
-                return if (isStickyHeaderPinned) {
-                    // 吸顶后，内层 LazyColumn 消耗滑动事件
-                    available
-                } else {
-                    // 未吸顶，内层不响应滑动，外层 LazyColumn 处理
-                    Offset.Zero
-                }
-            }
-
-            override suspend fun onPreFling(available: Velocity): Velocity {
-                // 控制 fling 行为
-                return if (isStickyHeaderPinned) available else Velocity.Zero
-            }
-        }
+    val nestedScrollConnection = remember(isStickyHeaderPinned, listState) {
+        HomePageNestedScrollConnection({ pinned ->
+            Log.d(TAG, "isStickyHeaderPinned: $pinned")
+            isStickyHeaderPinned = pinned
+        }, listState)
     }
 
     Scaffold(
-        modifier = modifier.nestedScroll(topAppBarScrollBehavior.nestedScrollConnection),
+        modifier = modifier
+            .nestedScroll(nestedScrollConnection),
         topBar = {
             TopAppBar(
                 modifier = Modifier.fillMaxWidth(),
@@ -184,7 +185,7 @@ fun HomePage(
                 .padding(innerPadding)
                 .padding(horizontal = 20.dp)
         ) {
-            item {
+            item(key = "header") {
                 // 顶部内容
                 Column {
                     Spacer(Modifier.height(10.dp))
@@ -226,48 +227,49 @@ fun HomePage(
                     }
                 )
             }
-            item {
+            item(key = "tabs") {
                 // 计算Pager高度，考虑内边距
                 val pagerHeight = screenHeight - innerPadding.calculateTopPadding()
                 IconInfosPager(
                     pagerState = pagerState,
                     tabContents = listOf(
-                        {
-                            LazyColumn(
-                                modifier = Modifier
-                                    .fillMaxSize(),
-                                userScrollEnabled = isStickyHeaderPinned
-                            ) {
-                                items(50) {
-                                    Text(
-                                        "火币内容 $it",
-                                        Modifier
-                                            .height(50.dp)
-                                            .padding(5.dp)
-                                    )
-                                }
-                            }
-                        },
-                        {
-                            LazyColumn(
-                                modifier = Modifier
-                                    .fillMaxSize(),
-                                userScrollEnabled = isStickyHeaderPinned
-                            ) {
-                                items(50) {
-                                    Text(
-                                        "币安内容 $it",
-                                        Modifier
-                                            .height(50.dp)
-                                            .padding(5.dp)
-                                    )
-                                }
-                            }
-                        }
+                        { TabContent(isStickyHeaderPinned, "火币") },
+                        { TabContent(isStickyHeaderPinned, "BTC") }
                     ),
                     modifier = Modifier.height(pagerHeight)
                 )
             }
+        }
+    }
+}
+
+@Composable
+private fun TabContent(isStickyHeaderPinned: Boolean, title: String) {
+    val listState = rememberLazyListState()
+
+    Log.d(TAG, "TabContent: $isStickyHeaderPinned")
+    LazyColumn(
+        state = listState,
+        modifier = Modifier
+            .fillMaxSize()
+            .nestedScroll(object : NestedScrollConnection {
+                override fun onPreScroll(available: Offset, source: NestedScrollSource): Offset {
+                    // 如果 stickyHeader 还没吸顶，阻止内部滚动
+                    if (!isStickyHeaderPinned) {
+                        return available
+                    }
+                    return Offset.Zero
+                }
+            }),
+        userScrollEnabled = isStickyHeaderPinned
+    ) {
+        items(50) {
+            Text(
+                "$title $it",
+                Modifier
+                    .height(50.dp)
+                    .padding(5.dp)
+            )
         }
     }
 }
@@ -280,7 +282,11 @@ private fun StockList(stockItems: State<List<StockItem>>) {
 }
 
 data class StockItem(
-    val name: String, val withFire: Boolean, val price: Float, val convertPrice: Float, val percent: Float
+    val name: String,
+    val withFire: Boolean,
+    val price: Float,
+    val convertPrice: Float,
+    val percent: Float
 )
 
 @Composable
@@ -291,7 +297,10 @@ fun StockItemWidget(index: Int, stockItem: StockItem) {
             .fillMaxWidth()
             .height(66.dp), verticalAlignment = Alignment.CenterVertically
     ) {
-        Text(stockItem.name, style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold))
+        Text(
+            stockItem.name,
+            style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold)
+        )
         Icon(
             imageVector = Icons.Rounded.LocalFireDepartment,
             tint = MaterialTheme.colorScheme.primary,
@@ -299,7 +308,10 @@ fun StockItemWidget(index: Int, stockItem: StockItem) {
         )
         Spacer(Modifier.weight(1f))
         Column {
-            Text("${stockItem.price}", style = MaterialTheme.typography.bodyLarge.copy(fontWeight = FontWeight.W800))
+            Text(
+                "${stockItem.price}",
+                style = MaterialTheme.typography.bodyLarge.copy(fontWeight = FontWeight.W800)
+            )
             Text("${stockItem.convertPrice}")
         }
         Spacer(Modifier.width(20.dp))
@@ -312,7 +324,8 @@ fun StockPercentWidget(percent: Float) {
     Box(
         modifier = Modifier
             .background(
-                color = if (percent > 0) StockUpColor else StockDownColor, shape = RoundedCornerShape(10.dp)
+                color = if (percent > 0) StockUpColor else StockDownColor,
+                shape = RoundedCornerShape(10.dp)
             )
             .width(80.dp)
             .height(30.dp), contentAlignment = Alignment.Center
@@ -334,7 +347,8 @@ fun BiAnSearchBar(modifier: Modifier = Modifier) {
             .fillMaxWidth()
             .clip(RoundedCornerShape(10.dp))
             .background(color = InputFieldBg)
-            .padding(horizontal = 5.dp, vertical = 6.dp), verticalAlignment = Alignment.CenterVertically
+            .padding(horizontal = 5.dp, vertical = 6.dp),
+        verticalAlignment = Alignment.CenterVertically
     ) {
         Icon(
             modifier = Modifier.size(20.dp),
@@ -349,7 +363,9 @@ fun BiAnSearchBar(modifier: Modifier = Modifier) {
             ) {
                 if (state.text.isEmpty()) {
                     Text(
-                        text = "TRUMP", color = Color.Gray, style = MaterialTheme.typography.bodyMedium
+                        text = "TRUMP",
+                        color = Color.Gray,
+                        style = MaterialTheme.typography.bodyMedium
                     )
                 }
                 innerTextField() // 渲染实际的输入框
@@ -379,7 +395,10 @@ fun IconInfosTabRow(
 ) {
     TabRow(selectedTabIndex = pagerState.currentPage) {
         tabTitles.forEachIndexed { index, title ->
-            Tab(selected = pagerState.currentPage == index, onClick = { onTabSelected(index) }, text = { Text(title) })
+            Tab(
+                selected = pagerState.currentPage == index,
+                onClick = { onTabSelected(index) },
+                text = { Text(title) })
         }
     }
 }
