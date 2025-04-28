@@ -82,57 +82,64 @@ fun HomePage(
     onLoginClicked: () -> Unit = {}
 ) {
     val topAppBarScrollBehavior = TopAppBarDefaults.pinnedScrollBehavior()
-    Log.d(TAG, "HomePage: 1")
-
     val stockItems = homeViewModel.stockItems.collectAsState()
 
-    Scaffold(modifier = modifier.nestedScroll(topAppBarScrollBehavior.nestedScrollConnection), topBar = {
-        Log.d(TAG, "HomePage: 3")
-        TopAppBar(modifier = Modifier
-            .fillMaxWidth()
-            .padding(start = 10.dp, end = 20.dp),
-            title = {
-                BiAnSearchBar()
-            },
-            scrollBehavior = topAppBarScrollBehavior,
-            navigationIcon = {
-                Icon(
-                    modifier = modifier
-                        .size(35.dp)
-                        .padding(5.dp),
-                    contentDescription = "",
-                    painter = painterResource(R.drawable.google),
-                    tint = Color.Unspecified
-                )
-            }, actions = {
-                SearchBarIcon(imageVector = Icons.Outlined.CameraAlt)
-                SearchBarIcon(imageVector = Icons.Default.Call)
-                SearchBarIcon(imageVector = Icons.Outlined.Email)
-                SearchBarIcon(imageVector = Icons.Default.AddCard)
-            })
-    }, content = { innerPadding ->
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(innerPadding)
-                .padding(horizontal = 20.dp)
-        ) {
-            Log.d(TAG, "HomePage: 2")
-            Spacer(Modifier.height(10.dp))
-            Text(
-                "欢迎探索数字资产的世界!",
-                style = MaterialTheme.typography.titleLarge.copy(fontWeight = FontWeight.W800, fontSize = 28.sp)
-            )
-            Spacer(Modifier.height(30.dp))
-            Button(modifier = Modifier.width(180.dp), shape = RoundedCornerShape(10.dp), onClick = {
-                onLoginClicked.invoke()
-            }) {
-                Text("注册/登陆", style = MaterialTheme.typography.bodyMedium)
+    Scaffold(
+        modifier = modifier.nestedScroll(topAppBarScrollBehavior.nestedScrollConnection),
+        topBar = {
+            TopAppBar(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(start = 10.dp, end = 20.dp),
+                title = {
+                    BiAnSearchBar()
+                },
+                scrollBehavior = topAppBarScrollBehavior,
+                navigationIcon = {
+                    Icon(
+                        modifier = modifier
+                            .size(35.dp)
+                            .padding(5.dp),
+                        contentDescription = "",
+                        painter = painterResource(R.drawable.google),
+                        tint = Color.Unspecified
+                    )
+                }, actions = {
+                    SearchBarIcon(imageVector = Icons.Outlined.CameraAlt)
+                    SearchBarIcon(imageVector = Icons.Default.Call)
+                    SearchBarIcon(imageVector = Icons.Outlined.Email)
+                    SearchBarIcon(imageVector = Icons.Default.AddCard)
+                })
+        },
+        content = { innerPadding ->
+            LazyColumn(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(innerPadding)
+                    .padding(horizontal = 20.dp)
+            ) {
+                item {
+                    Spacer(Modifier.height(10.dp))
+                    Text(
+                        "欢迎探索数字资产的世界!",
+                        style = MaterialTheme.typography.titleLarge.copy(fontWeight = FontWeight.W800, fontSize = 28.sp)
+                    )
+                    Spacer(Modifier.height(30.dp))
+                    Button(
+                        modifier = Modifier.width(180.dp),
+                        shape = RoundedCornerShape(10.dp),
+                        onClick = { onLoginClicked.invoke() }
+                    ) {
+                        Text("注册/登陆", style = MaterialTheme.typography.bodyMedium)
+                    }
+                    Spacer(Modifier.height(30.dp))
+                }
+                itemsIndexed(stockItems.value) { index, it ->
+                    StockItemWidget(index, it)
+                }
             }
-            Spacer(Modifier.height(30.dp))
-            QuotesWidget(stockItems)
         }
-    })
+    )
 }
 
 @Composable
