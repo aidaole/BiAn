@@ -2,6 +2,8 @@ plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.android)
     alias(libs.plugins.kotlin.compose)
+    alias(libs.plugins.hilt)
+    id("kotlin-kapt")
 }
 
 android {
@@ -40,6 +42,10 @@ android {
 }
 
 dependencies {
+
+    implementation(libs.hilt.android) // Hilt 核心库
+    kapt(libs.hilt.compiler) // Hilt 注解处理器
+    implementation(libs.hilt.navigation.compose) // Hilt 与 Compose Navigation 集成
 
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.lifecycle.runtime.ktx)

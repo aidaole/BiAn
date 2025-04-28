@@ -1,6 +1,8 @@
 package com.aidaole.bian.features.home
 
 import android.annotation.SuppressLint
+import android.app.Application
+import android.util.Log
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
@@ -14,22 +16,17 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.text.input.rememberTextFieldState
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.AddCard
 import androidx.compose.material.icons.filled.Call
-import androidx.compose.material.icons.filled.Info
-import androidx.compose.material.icons.filled.MailOutline
-import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.Search
-import androidx.compose.material.icons.outlined.BrokenImage
 import androidx.compose.material.icons.outlined.CameraAlt
 import androidx.compose.material.icons.outlined.Email
 import androidx.compose.material.icons.rounded.LocalFireDepartment
-import androidx.compose.material.icons.rounded.Message
 import androidx.compose.material3.Button
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
@@ -39,6 +36,8 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.State
+import androidx.compose.runtime.collectAsState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
@@ -51,6 +50,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.hilt.navigation.compose.hiltViewModel
 import com.aidaole.bian.R
 import com.aidaole.bian.core.theme.InputFieldBg
 import com.aidaole.bian.core.theme.StockDownColor
@@ -64,39 +64,52 @@ private fun HomePagePreview() {
         Column {
             Spacer(Modifier.height(30.dp))
             HomePage(
-                modifier = Modifier.alpha(0.8f)
+                modifier = Modifier.alpha(0.8f), homeViewModel = HomeViewModel(Application())
             )
         }
 
     }
 }
 
+private const val TAG = "HomePage"
+
 @OptIn(ExperimentalMaterial3Api::class)
 @SuppressLint("UnusedMaterial3ScaffoldPaddingParameter")
 @Composable
-fun HomePage(modifier: Modifier = Modifier, onLoginClicked: () -> Unit = {}) {
+fun HomePage(
+    homeViewModel: HomeViewModel = hiltViewModel(),
+    modifier: Modifier = Modifier,
+    onLoginClicked: () -> Unit = {}
+) {
     val topAppBarScrollBehavior = TopAppBarDefaults.pinnedScrollBehavior()
+    Log.d(TAG, "HomePage: 1")
+
+    val stockItems = homeViewModel.stockItems.collectAsState()
 
     Scaffold(modifier = modifier.nestedScroll(topAppBarScrollBehavior.nestedScrollConnection), topBar = {
+        Log.d(TAG, "HomePage: 3")
         TopAppBar(modifier = Modifier
             .fillMaxWidth()
-            .padding(start = 10.dp, end = 20.dp), title = {
-            BiAnSearchBar()
-        }, scrollBehavior = topAppBarScrollBehavior, navigationIcon = {
-            Icon(
-                modifier = modifier
-                    .size(35.dp)
-                    .padding(5.dp),
-                contentDescription = "",
-                painter = painterResource(R.drawable.google),
-                tint = Color.Unspecified
-            )
-        }, actions = {
-            SearchBarIcon(imageVector = Icons.Outlined.CameraAlt)
-            SearchBarIcon(imageVector = Icons.Default.Call)
-            SearchBarIcon(imageVector = Icons.Outlined.Email)
-            SearchBarIcon(imageVector = Icons.Default.AddCard)
-        })
+            .padding(start = 10.dp, end = 20.dp),
+            title = {
+                BiAnSearchBar()
+            },
+            scrollBehavior = topAppBarScrollBehavior,
+            navigationIcon = {
+                Icon(
+                    modifier = modifier
+                        .size(35.dp)
+                        .padding(5.dp),
+                    contentDescription = "",
+                    painter = painterResource(R.drawable.google),
+                    tint = Color.Unspecified
+                )
+            }, actions = {
+                SearchBarIcon(imageVector = Icons.Outlined.CameraAlt)
+                SearchBarIcon(imageVector = Icons.Default.Call)
+                SearchBarIcon(imageVector = Icons.Outlined.Email)
+                SearchBarIcon(imageVector = Icons.Default.AddCard)
+            })
     }, content = { innerPadding ->
         Column(
             modifier = Modifier
@@ -104,6 +117,7 @@ fun HomePage(modifier: Modifier = Modifier, onLoginClicked: () -> Unit = {}) {
                 .padding(innerPadding)
                 .padding(horizontal = 20.dp)
         ) {
+            Log.d(TAG, "HomePage: 2")
             Spacer(Modifier.height(10.dp))
             Text(
                 "欢迎探索数字资产的世界!",
@@ -116,24 +130,18 @@ fun HomePage(modifier: Modifier = Modifier, onLoginClicked: () -> Unit = {}) {
                 Text("注册/登陆", style = MaterialTheme.typography.bodyMedium)
             }
             Spacer(Modifier.height(30.dp))
-            QuotesWidget()
+            QuotesWidget(stockItems)
         }
     })
 }
 
 @Composable
-fun QuotesWidget() {
-    val stockItems = listOf(
-        StockItem(
-            "BNB", true, 604.28F, 4411.24F, -1.78F
-        ),
-        StockItem(
-            "BTC", true, 93196.73F, 680336.24F, 0.38F
-        )
-    )
+fun QuotesWidget(stockItems: State<List<StockItem>>) {
+    Log.d(TAG, "QuotesWidget: ")
     LazyColumn {
-        items(stockItems) {
-            StockItemWidget(it)
+        Log.d(TAG, "QuotesWidget: 1")
+        itemsIndexed(stockItems.value) { index, it ->
+            StockItemWidget(index, it)
         }
     }
 }
@@ -143,7 +151,8 @@ data class StockItem(
 )
 
 @Composable
-fun StockItemWidget(stockItem: StockItem) {
+fun StockItemWidget(index: Int, stockItem: StockItem) {
+    Log.d(TAG, "StockItemWidget: $index")
     Row(
         modifier = Modifier
             .fillMaxWidth()

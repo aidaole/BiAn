@@ -27,7 +27,9 @@ import com.aidaole.bian.features.home.HomePage
 import com.aidaole.bian.core.theme.BiAnTheme
 import com.aidaole.bian.features.language.LanguageChoosePage
 import com.aidaole.bian.features.login.LoginPage
+import dagger.hilt.android.AndroidEntryPoint
 
+@AndroidEntryPoint
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
