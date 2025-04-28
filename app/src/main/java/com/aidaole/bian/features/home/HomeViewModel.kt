@@ -21,21 +21,6 @@ class HomeViewModel @Inject constructor(
             StockItem("BTC", true, 93196.73F, 680336.24F, 0.38F),
             StockItem("BTC", true, 93196.73F, 680336.24F, 0.38F),
             StockItem("BTC", true, 93196.73F, 680336.24F, 0.38F),
-            StockItem("BTC", true, 93196.73F, 680336.24F, 0.38F),
-            StockItem("BTC", true, 93196.73F, 680336.24F, 0.38F),
-            StockItem("BTC", true, 93196.73F, 680336.24F, 0.38F),
-            StockItem("BTC", true, 93196.73F, 680336.24F, 0.38F),
-            StockItem("BTC", true, 93196.73F, 680336.24F, 0.38F),
-            StockItem("BTC", true, 93196.73F, 680336.24F, 0.38F),
-            StockItem("BTC", true, 93196.73F, 680336.24F, 0.38F),
-            StockItem("BTC", true, 93196.73F, 680336.24F, 0.38F),
-            StockItem("BTC", true, 93196.73F, 680336.24F, 0.38F),
-            StockItem("BTC", true, 93196.73F, 680336.24F, 0.38F),
-            StockItem("BTC", true, 93196.73F, 680336.24F, 0.38F),
-            StockItem("BTC", true, 93196.73F, 680336.24F, 0.38F),
-            StockItem("BTC", true, 93196.73F, 680336.24F, 0.38F),
-            StockItem("BTC", true, 93196.73F, 680336.24F, 0.38F),
-            StockItem("BTC", true, 93196.73F, 680336.24F, 0.38F),
         )
     )
 }

@@ -16,7 +16,10 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.itemsIndexed
+import androidx.compose.foundation.pager.HorizontalPager
+import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.text.input.rememberTextFieldState
@@ -32,6 +35,7 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.TabRow
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
@@ -47,6 +51,7 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -55,6 +60,9 @@ import com.aidaole.bian.R
 import com.aidaole.bian.core.theme.InputFieldBg
 import com.aidaole.bian.core.theme.StockDownColor
 import com.aidaole.bian.core.theme.StockUpColor
+import androidx.compose.material3.Tab
+import androidx.compose.runtime.rememberCoroutineScope
+import kotlinx.coroutines.launch
 
 @Preview
 @Composable
@@ -77,82 +85,91 @@ private const val TAG = "HomePage"
 @SuppressLint("UnusedMaterial3ScaffoldPaddingParameter")
 @Composable
 fun HomePage(
-    homeViewModel: HomeViewModel = hiltViewModel(),
-    modifier: Modifier = Modifier,
-    onLoginClicked: () -> Unit = {}
+    homeViewModel: HomeViewModel = hiltViewModel(), modifier: Modifier = Modifier, onLoginClicked: () -> Unit = {}
 ) {
     val topAppBarScrollBehavior = TopAppBarDefaults.pinnedScrollBehavior()
     val stockItems = homeViewModel.stockItems.collectAsState()
 
-    Scaffold(
-        modifier = modifier.nestedScroll(topAppBarScrollBehavior.nestedScrollConnection),
-        topBar = {
-            TopAppBar(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(start = 10.dp, end = 20.dp),
-                title = {
-                    BiAnSearchBar()
-                },
-                scrollBehavior = topAppBarScrollBehavior,
-                navigationIcon = {
-                    Icon(
-                        modifier = modifier
-                            .size(35.dp)
-                            .padding(5.dp),
-                        contentDescription = "",
-                        painter = painterResource(R.drawable.google),
-                        tint = Color.Unspecified
-                    )
-                }, actions = {
-                    SearchBarIcon(imageVector = Icons.Outlined.CameraAlt)
-                    SearchBarIcon(imageVector = Icons.Default.Call)
-                    SearchBarIcon(imageVector = Icons.Outlined.Email)
-                    SearchBarIcon(imageVector = Icons.Default.AddCard)
-                })
-        },
-        content = { innerPadding ->
-            LazyColumn(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .padding(innerPadding)
-                    .padding(horizontal = 20.dp)
-            ) {
-                item {
-                    Spacer(Modifier.height(10.dp))
-                    Text(
-                        "欢迎探索数字资产的世界!",
-                        style = MaterialTheme.typography.titleLarge.copy(fontWeight = FontWeight.W800, fontSize = 28.sp)
-                    )
-                    Spacer(Modifier.height(30.dp))
-                    Button(
-                        modifier = Modifier.width(180.dp),
-                        shape = RoundedCornerShape(10.dp),
-                        onClick = { onLoginClicked.invoke() }
-                    ) {
-                        Text("注册/登陆", style = MaterialTheme.typography.bodyMedium)
-                    }
-                    Spacer(Modifier.height(30.dp))
+    Scaffold(modifier = modifier.nestedScroll(topAppBarScrollBehavior.nestedScrollConnection), topBar = {
+        TopAppBar(modifier = Modifier
+            .fillMaxWidth()
+            .padding(start = 10.dp, end = 20.dp), title = {
+            BiAnSearchBar()
+        }, scrollBehavior = topAppBarScrollBehavior, navigationIcon = {
+            Icon(
+                modifier = modifier
+                    .size(35.dp)
+                    .padding(5.dp),
+                contentDescription = "",
+                painter = painterResource(R.drawable.google),
+                tint = Color.Unspecified
+            )
+        }, actions = {
+            SearchBarIcon(imageVector = Icons.Outlined.CameraAlt)
+            SearchBarIcon(imageVector = Icons.Default.Call)
+            SearchBarIcon(imageVector = Icons.Outlined.Email)
+            SearchBarIcon(imageVector = Icons.Default.AddCard)
+        })
+    }, content = { innerPadding ->
+        LazyColumn (
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(innerPadding)
+                .padding(horizontal = 20.dp)
+        ) {
+            item {
+                Spacer(Modifier.height(10.dp))
+                Text(
+                    "欢迎探索数字资产的世界!",
+                    style = MaterialTheme.typography.titleLarge.copy(fontWeight = FontWeight.W800, fontSize = 28.sp)
+                )
+                Spacer(Modifier.height(30.dp))
+                Button(modifier = Modifier.width(180.dp),
+                    shape = RoundedCornerShape(10.dp),
+                    onClick = { onLoginClicked.invoke() }) {
+                    Text("注册/登陆", style = MaterialTheme.typography.bodyMedium)
                 }
-                itemsIndexed(
-                    stockItems.value,
-                    contentType = { _, _ -> 1 }
-                ) { index, it ->
-                    StockItemWidget(index, it)
-                }
+                Spacer(Modifier.height(30.dp))
+                StockList(stockItems)
+                Spacer(Modifier.height(20.dp))
+                Text(
+                    "查看350余种代币",
+                    modifier = Modifier.fillMaxWidth(),
+                    textAlign = TextAlign.Center,
+                    style = MaterialTheme.typography.bodyMedium.copy(
+                        color = MaterialTheme.colorScheme.primary, fontWeight = FontWeight.W800
+                    )
+                )
+            }
+            item {
+                IconInfosWidget(
+                    tabTitles = listOf("火币", "火币"),
+                    listOf(
+                        {
+                            LazyColumn {
+                                items(20) {
+                                    Text("Index $1")
+                                }
+                            }
+                        },
+                        {
+                            LazyColumn {
+                                items(20) {
+                                    Text("Index $1")
+                                }
+                            }
+                        }
+                    )
+                )
             }
         }
-    )
+    })
 }
 
 @Composable
-fun QuotesWidget(stockItems: State<List<StockItem>>) {
-    Log.d(TAG, "QuotesWidget: ")
-    LazyColumn {
-        Log.d(TAG, "QuotesWidget: 1")
-        itemsIndexed(stockItems.value) { index, it ->
-            StockItemWidget(index, it)
-        }
+private fun StockList(stockItems: State<List<StockItem>>) {
+    stockItems.value.forEachIndexed { index, item ->
+        StockItemWidget(index, item)
     }
 }
 
@@ -166,7 +183,7 @@ fun StockItemWidget(index: Int, stockItem: StockItem) {
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .height(60.dp), verticalAlignment = Alignment.CenterVertically
+            .height(66.dp), verticalAlignment = Alignment.CenterVertically
     ) {
         Text(stockItem.name, style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold))
         Icon(
@@ -192,8 +209,7 @@ fun StockPercentWidget(percent: Float) {
                 color = if (percent > 0) StockUpColor else StockDownColor, shape = RoundedCornerShape(10.dp)
             )
             .width(80.dp)
-            .height(30.dp),
-        contentAlignment = Alignment.Center
+            .height(30.dp), contentAlignment = Alignment.Center
     ) {
         Text(
             "$percent",
@@ -249,4 +265,41 @@ fun SearchBarIcon(
         contentDescription = "chat",
         tint = Color.Unspecified,
     )
+}
+
+@Composable
+fun IconInfosWidget(
+    tabTitles: List<String>,
+    tabContents: List<@Composable () -> Unit>,
+    modifier: Modifier = Modifier
+) {
+    val pagerState = rememberPagerState(0, 0f) {
+        tabTitles.size
+    }
+
+    val coroutineScope = rememberCoroutineScope()
+
+    Column(modifier = modifier) {
+        TabRow(selectedTabIndex = pagerState.currentPage) {
+            tabTitles.forEachIndexed { index, title ->
+                Tab(
+                    selected = pagerState.currentPage == index,
+                    onClick = {
+                        coroutineScope.launch {
+                            pagerState.animateScrollToPage(index)
+                        }
+                    },
+                    text = { Text(title) }
+                )
+            }
+        }
+        HorizontalPager(
+            state = pagerState,
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(800.dp)
+        ) { page ->
+            tabContents[page]()
+        }
+    }
 }
