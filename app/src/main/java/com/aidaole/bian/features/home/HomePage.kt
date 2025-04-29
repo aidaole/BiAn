@@ -6,7 +6,6 @@ import android.util.Log
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
-import androidx.compose.foundation.gestures.scrollBy
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -18,15 +17,15 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.LazyListState
-import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.PagerState
 import androidx.compose.foundation.pager.rememberPagerState
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.text.input.rememberTextFieldState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.AddCard
 import androidx.compose.material.icons.filled.Call
@@ -45,9 +44,9 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.State
 import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -69,7 +68,6 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
-import androidx.compose.ui.unit.Velocity
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
@@ -78,8 +76,9 @@ import com.aidaole.bian.core.theme.InputFieldBg
 import com.aidaole.bian.core.theme.StockDownColor
 import com.aidaole.bian.core.theme.StockUpColor
 import com.aidaole.bian.features.home.data.StockItem
-import com.aidaole.bian.features.home.widget.HomePageNestedScrollConnection
 import kotlinx.coroutines.launch
+
+private const val TAG = "HomePage"
 
 @Preview
 @Composable
@@ -96,9 +95,6 @@ private fun HomePagePreview() {
     }
 }
 
-private const val TAG = "HomePage"
-
-
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalFoundationApi::class)
 @SuppressLint("UnusedMaterial3ScaffoldPaddingParameter")
 @Composable
@@ -114,19 +110,18 @@ fun HomePage(
     val coroutineScope = rememberCoroutineScope()
     val configuration = LocalConfiguration.current
     val screenHeight = configuration.screenHeightDp.dp
-    val listState = rememberLazyListState()
-    var isStickyHeaderPinned by remember { mutableStateOf(false) }
-
-    val nestedScrollConnection = remember(isStickyHeaderPinned, listState) {
-        HomePageNestedScrollConnection({ pinned ->
-            Log.d(TAG, "isStickyHeaderPinned: $pinned")
-            isStickyHeaderPinned = pinned
-        }, listState)
+    val outDispatcher = remember { NestedScrollDispatcher() }
+    val outerScrollState = rememberScrollState()
+    // 计算 stickyHeader 是否吸顶
+    val isStickyHeaderPinned = remember(outerScrollState) {
+        derivedStateOf {
+            val pinned = outerScrollState.value >= 1600
+            Log.d(TAG, "isStickyHeaderPinned: $pinned, scrollState: ${outerScrollState.value}")
+            pinned
+        }
     }
 
     Scaffold(
-        modifier = modifier
-            .nestedScroll(nestedScrollConnection),
         topBar = {
             TopAppBar(
                 modifier = Modifier.fillMaxWidth(),
@@ -155,38 +150,49 @@ fun HomePage(
             )
         }
     ) { innerPadding ->
-        LazyColumn(
-            state = listState,
+        Column (
             modifier = Modifier
                 .fillMaxSize()
+                .verticalScroll(outerScrollState)
+                .nestedScroll(
+                    dispatcher = outDispatcher,
+                    connection = object : NestedScrollConnection {
+                        override fun onPreScroll(
+                            available: Offset,
+                            source: NestedScrollSource
+                        ): Offset {
+                            Log.d(TAG, "onPreScroll: 父布局收到 $available")
+                            if (isStickyHeaderPinned.value){
+                                return Offset.Zero
+                            } else {
+                                outerScrollState.dispatchRawDelta(-available.y)
+                                return Offset(0f, available.y)
+                            }
+                        }
+                    }
+                )
                 .padding(innerPadding)
                 .padding(horizontal = 20.dp)
         ) {
-            item(key = "HeaderContent") {
-                HeaderContent(stockItems, onLoginClicked)
-            }
-            stickyHeader(key = "stickyHeader") {
-                IconInfosTabRow(
-                    tabTitles = tabTitles,
-                    pagerState = pagerState,
-                    onTabSelected = { index ->
-                        coroutineScope.launch { pagerState.animateScrollToPage(index) }
-                    }
-                )
-            }
-            item(key = "tabs") {
-                // 计算Pager高度，考虑内边距
-                val pagerHeight = screenHeight - innerPadding.calculateTopPadding()
-                Log.d(TAG, "pagerHeight: $pagerHeight")
-                IconInfosPager(
-                    pagerState = pagerState,
-                    tabContents = listOf(
-                        { TabContent(isStickyHeaderPinned, "火币") },
-                        { TabContent(isStickyHeaderPinned, "BTC") }
-                    ),
-                    modifier = Modifier.height(pagerHeight)
-                )
-            }
+            HeaderContent(stockItems, onLoginClicked)
+            IconInfosTabRow(
+                tabTitles = tabTitles,
+                pagerState = pagerState,
+                onTabSelected = { index ->
+                    coroutineScope.launch { pagerState.animateScrollToPage(index) }
+                }
+            )
+            // 计算Pager高度，考虑内边距
+            val pagerHeight = screenHeight - innerPadding.calculateTopPadding()
+            Log.d(TAG, "pagerHeight: $pagerHeight")
+            IconInfosPager(
+                pagerState = pagerState,
+                tabContents = listOf(
+                    { TabContent(isStickyHeaderPinned.value, "火币", outDispatcher) },
+                    { TabContent(isStickyHeaderPinned.value, "BTC", outDispatcher) }
+                ),
+                modifier = Modifier.height(pagerHeight)
+            )
         }
     }
 }
@@ -229,7 +235,11 @@ fun HeaderContent(
 }
 
 @Composable
-private fun TabContent(isStickyHeaderPinned: Boolean, title: String) {
+private fun TabContent(
+    isStickyHeaderPinned: Boolean,
+    title: String,
+    outDispatcher: NestedScrollDispatcher
+) {
     val listState = rememberLazyListState()
 
     Log.d(TAG, "TabContent: $isStickyHeaderPinned")
@@ -239,14 +249,19 @@ private fun TabContent(isStickyHeaderPinned: Boolean, title: String) {
             .fillMaxSize()
             .nestedScroll(object : NestedScrollConnection {
                 override fun onPreScroll(available: Offset, source: NestedScrollSource): Offset {
-                    // 如果 stickyHeader 还没吸顶，阻止内部滚动
-                    if (!isStickyHeaderPinned) {
-                        return available
+                    val delta = available.y
+                    return if (!isStickyHeaderPinned && delta < 0) {  // 向上滑动且未吸顶
+                        // 分发滑动事件给外层LazyColumn
+                        val parentConsumed = outDispatcher.dispatchPreScroll(
+                            available = available, source = source
+                        )
+                        Log.d(TAG, "Parent consumes scroll: $available, consumed: $parentConsumed")
+                        parentConsumed
+                    } else {
+                        Offset.Zero
                     }
-                    return Offset.Zero
                 }
-            },
-            ),
+            }),
     ) {
         items(50) {
             Text(
