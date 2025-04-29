@@ -42,7 +42,6 @@ import androidx.compose.material3.Tab
 import androidx.compose.material3.TabRow
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
-import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.State
 import androidx.compose.runtime.collectAsState
@@ -63,6 +62,7 @@ import androidx.compose.ui.input.nestedscroll.NestedScrollConnection
 import androidx.compose.ui.input.nestedscroll.NestedScrollDispatcher
 import androidx.compose.ui.input.nestedscroll.NestedScrollSource
 import androidx.compose.ui.input.nestedscroll.nestedScroll
+import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
@@ -88,34 +88,37 @@ private fun HomePagePreview() {
         Column {
             Spacer(Modifier.height(30.dp))
             HomePage(
-                modifier = Modifier.alpha(0.8f), homeViewModel = HomeViewModel(Application())
+                homeViewModel = HomeViewModel(Application())
             )
         }
 
     }
 }
 
-@OptIn(ExperimentalMaterial3Api::class, ExperimentalFoundationApi::class)
+@OptIn(ExperimentalMaterial3Api::class)
 @SuppressLint("UnusedMaterial3ScaffoldPaddingParameter")
 @Composable
 fun HomePage(
     homeViewModel: HomeViewModel = hiltViewModel(),
-    modifier: Modifier = Modifier,
     onLoginClicked: () -> Unit = {}
 ) {
-    val topAppBarScrollBehavior = TopAppBarDefaults.pinnedScrollBehavior()
     val stockItems = homeViewModel.stockItems.collectAsState()
     val tabTitles = listOf("火币", "币安")
     val pagerState = rememberPagerState { tabTitles.size }
     val coroutineScope = rememberCoroutineScope()
-    val configuration = LocalConfiguration.current
-    val screenHeight = configuration.screenHeightDp.dp
+
+    val screenHeight = LocalConfiguration.current.screenHeightDp.dp
+    Log.d(TAG, "screenHeight: $screenHeight")
     val outDispatcher = remember { NestedScrollDispatcher() }
     val outerScrollState = rememberScrollState()
-    // 计算 stickyHeader 是否吸顶
-    val isStickyHeaderPinned = remember(outerScrollState) {
+
+    var appBarHeight by remember { mutableStateOf(0) }
+    var stockLIstHeight by remember { mutableStateOf(0) }
+
+    // 计算 IconInfosTabRow 是否到顶
+    val isStickyHeaderPinned = remember(outerScrollState, stockLIstHeight) {
         derivedStateOf {
-            val pinned = outerScrollState.value >= 1600
+            val pinned = outerScrollState.value >= stockLIstHeight
             Log.d(TAG, "isStickyHeaderPinned: $pinned, scrollState: ${outerScrollState.value}")
             pinned
         }
@@ -124,14 +127,18 @@ fun HomePage(
     Scaffold(
         topBar = {
             TopAppBar(
-                modifier = Modifier.fillMaxWidth(),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .onSizeChanged { size ->
+                        appBarHeight = size.height
+                        Log.d(TAG, "appBarHeight: $appBarHeight ")
+                    },
                 title = { BiAnSearchBar() },
-                scrollBehavior = topAppBarScrollBehavior,
                 navigationIcon = {
                     Row {
                         Spacer(Modifier.width(10.dp))
                         Icon(
-                            modifier = modifier
+                            modifier = Modifier
                                 .size(35.dp)
                                 .padding(5.dp),
                             contentDescription = "",
@@ -150,7 +157,7 @@ fun HomePage(
             )
         }
     ) { innerPadding ->
-        Column (
+        Column(
             modifier = Modifier
                 .fillMaxSize()
                 .verticalScroll(outerScrollState)
@@ -162,7 +169,7 @@ fun HomePage(
                             source: NestedScrollSource
                         ): Offset {
                             Log.d(TAG, "onPreScroll: 父布局收到 $available")
-                            if (isStickyHeaderPinned.value){
+                            if (isStickyHeaderPinned.value) {
                                 return Offset.Zero
                             } else {
                                 outerScrollState.dispatchRawDelta(-available.y)
@@ -174,7 +181,13 @@ fun HomePage(
                 .padding(innerPadding)
                 .padding(horizontal = 20.dp)
         ) {
-            HeaderContent(stockItems, onLoginClicked)
+            HeaderContent(
+                modifier = Modifier.onSizeChanged { size ->
+                    stockLIstHeight = size.height
+                },
+                stockItems,
+                onLoginClicked
+            )
             IconInfosTabRow(
                 tabTitles = tabTitles,
                 pagerState = pagerState,
@@ -199,10 +212,13 @@ fun HomePage(
 
 @Composable
 fun HeaderContent(
+    modifier: Modifier,
     stockItems: State<List<StockItem>>,
     onLoginClicked: () -> Unit
 ) {
-    Column {
+    Column(
+        modifier = modifier
+    ) {
         Spacer(Modifier.height(10.dp))
         Text(
             "欢迎探索数字资产的世界!",

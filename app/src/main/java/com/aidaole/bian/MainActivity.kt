@@ -50,7 +50,6 @@ fun MainRoute() {
     NavHost(navController, startDestination = "home") {
         composable("home") {
             HomePage(
-                modifier = Modifier,
                 onLoginClicked = {
                     navController.navigate("login", navOptions = navOptions {
                         anim {
