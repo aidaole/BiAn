@@ -4,7 +4,6 @@ import android.annotation.SuppressLint
 import android.app.Application
 import android.util.Log
 import androidx.compose.foundation.Image
-import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
@@ -12,16 +11,13 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.PagerState
 import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Tab
 import androidx.compose.material3.TabRow
@@ -30,11 +26,10 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.input.nestedscroll.NestedScrollConnection
@@ -42,17 +37,15 @@ import androidx.compose.ui.input.nestedscroll.NestedScrollDispatcher
 import androidx.compose.ui.input.nestedscroll.NestedScrollSource
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.layout.onSizeChanged
-import androidx.compose.ui.platform.LocalConfiguration
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.painterResource
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.aidaole.bian.R
-import com.aidaole.bian.core.theme.StockDownColor
-import com.aidaole.bian.core.theme.StockUpColor
-import com.aidaole.bian.features.home.widget.HomeHeaderContent
 import com.aidaole.bian.features.home.widget.HomeAppBar
+import com.aidaole.bian.features.home.widget.HomeHeaderContent
 import kotlinx.coroutines.launch
 
 private const val TAG = "HomePage"
@@ -83,18 +76,21 @@ fun HomePage(
     val pagerState = rememberPagerState { tabTitles.size }
     val coroutineScope = rememberCoroutineScope()
 
-    val screenHeight = LocalConfiguration.current.screenHeightDp.dp
-    Log.d(TAG, "screenHeight: $screenHeight")
-    val outDispatcher = remember { NestedScrollDispatcher() }
+    val outerDispatcher = remember { NestedScrollDispatcher() }
     val outerScrollState = rememberScrollState()
 
-    var appBarHeight by remember { mutableStateOf(0) }
-    var stockLIstHeight by remember { mutableStateOf(0) }
+    var allHeight by remember { mutableIntStateOf(0) }
+    var stockListHeight by remember { mutableIntStateOf(0) }
+    var tabRowHeight by remember { mutableIntStateOf(0) }
+    val density = LocalDensity.current
+
+    val allHeightDp = with(density) { allHeight.toDp() }
 
     // 计算 IconInfosTabRow 是否到顶
-    val isStickyHeaderPinned = remember(outerScrollState, stockLIstHeight) {
+    val isStickyHeaderPinned by remember(outerScrollState) {
         derivedStateOf {
-            val pinned = outerScrollState.value >= stockLIstHeight
+            // 向上滑动的距离超过展示的stockListHeight高度, 说明tabRow已经到顶
+            val pinned = outerScrollState.value >= stockListHeight
             Log.d(TAG, "isStickyHeaderPinned: $pinned, scrollState: ${outerScrollState.value}")
             pinned
         }
@@ -102,80 +98,74 @@ fun HomePage(
 
     Scaffold(
         topBar = {
-            HomeAppBar(onSizeChanged = { size ->
-                appBarHeight = size.height
-                Log.d(TAG, "appBarHeight: $appBarHeight")
-            })
+            HomeAppBar()
         }
     ) { innerPadding ->
         Column(
             modifier = Modifier
                 .fillMaxSize()
+                .padding(innerPadding)
+                .padding(horizontal = 20.dp)
+                .onSizeChanged { size ->
+                    allHeight = size.height
+                }
                 .verticalScroll(outerScrollState)
                 .nestedScroll(
-                    dispatcher = outDispatcher,
+                    dispatcher = outerDispatcher,
                     connection = object : NestedScrollConnection {
                         override fun onPreScroll(
                             available: Offset,
                             source: NestedScrollSource
                         ): Offset {
-                            if (available.y < 0){
+                            val delta = available.y
+                            if (delta < 0) {
                                 // 向上滑动
-                                Log.d(
-                                    TAG,
-                                    "onPreScroll: 父布局收到 $available, isStickyHeaderPinned: ${isStickyHeaderPinned.value}"
-                                )
-                                // 防止快速拖动, 导致向上移动超出最大距离
-                                val restHeight = outerScrollState.value - stockLIstHeight
-                                var actual = restHeight.toFloat()
-                                Log.d(TAG, "onPreScroll: restHeight: $restHeight, available: $available")
-                                if (restHeight + available.y > 0) {
-                                    actual = available.y
+                                val actual = if (outerScrollState.value - delta > stockListHeight) {
+                                    // 这里处理是因为, 快速滑动时, 可能加上delta之后, 已经超过了stockListHeight,
+                                    outerScrollState.value - stockListHeight.toFloat()
+                                } else {
+                                    delta
                                 }
                                 outerScrollState.dispatchRawDelta(-actual)
                                 return Offset(0f, actual)
                             } else {
-                                // 向下滑动
-                                Log.d(TAG, "onPreScroll: 1父布局收到 $available")
-                                if (isStickyHeaderPinned.value) {
-                                    return Offset.Zero
-                                } else {
-                                    outerScrollState.dispatchRawDelta(-available.y)
-                                    return Offset(0f, available.y)
-                                }
+                                return Offset.Zero
                             }
-
                         }
                     }
                 )
-                .padding(innerPadding)
-                .padding(horizontal = 20.dp)
+
         ) {
             HomeHeaderContent(
                 modifier = Modifier.onSizeChanged { size ->
-                    stockLIstHeight = size.height
+                    stockListHeight = size.height
                 },
                 stockItems,
                 onLoginClicked
             )
-            IconInfosTabRow(
-                tabTitles = tabTitles,
-                pagerState = pagerState,
-                onTabSelected = { index ->
-                    coroutineScope.launch { pagerState.animateScrollToPage(index) }
-                }
-            )
-            // 计算Pager高度，考虑内边距
-            val pagerHeight = screenHeight - innerPadding.calculateTopPadding()
-            Log.d(TAG, "pagerHeight: $pagerHeight")
-            IconInfosPager(
-                pagerState = pagerState,
-                tabContents = listOf(
-                    { TabContent(isStickyHeaderPinned.value, "火币", outDispatcher) },
-                    { TabContent(isStickyHeaderPinned.value, "BTC", outDispatcher) }
-                ),
-                modifier = Modifier.height(pagerHeight)
-            )
+            Column(
+                modifier = Modifier.height(allHeightDp)
+            ) {
+                IconInfosTabRow(
+                    tabTitles = tabTitles,
+                    pagerState = pagerState,
+                    onTabSelected = { index ->
+                        coroutineScope.launch { pagerState.animateScrollToPage(index) }
+                    },
+                    onSizeChanged = {
+                        tabRowHeight = it.height
+                    }
+                )
+                IconInfosPager(
+                    pagerState = pagerState,
+                    tabContents = listOf(
+                        { TabContent(isStickyHeaderPinned, "火币", outerDispatcher) },
+                        { TabContent(isStickyHeaderPinned, "BTC", outerDispatcher) }
+                    ),
+                    modifier = Modifier.weight(1F)
+                )
+            }
+
         }
     }
 }
@@ -220,31 +210,18 @@ private fun TabContent(
     }
 }
 
-@Composable
-fun StockPercentWidget(percent: Float) {
-    Box(
-        modifier = Modifier
-            .background(
-                color = if (percent > 0) StockUpColor else StockDownColor,
-                shape = RoundedCornerShape(10.dp)
-            )
-            .width(80.dp)
-            .height(30.dp), contentAlignment = Alignment.Center
-    ) {
-        Text(
-            "$percent",
-            style = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.W800),
-            color = MaterialTheme.colorScheme.onSurface,
-        )
-    }
-}
-
 
 @Composable
 fun IconInfosTabRow(
-    tabTitles: List<String>, pagerState: PagerState, onTabSelected: (Int) -> Unit
+    tabTitles: List<String>,
+    pagerState: PagerState,
+    onTabSelected: (Int) -> Unit,
+    onSizeChanged: (IntSize) -> Unit
 ) {
-    TabRow(selectedTabIndex = pagerState.currentPage) {
+    TabRow(selectedTabIndex = pagerState.currentPage, modifier = Modifier.onSizeChanged { size ->
+        onSizeChanged.invoke(size)
+        Log.d(TAG, "IconInfosTabRow: ${size.height}")
+    }) {
         tabTitles.forEachIndexed { index, title ->
             Tab(
                 selected = pagerState.currentPage == index,

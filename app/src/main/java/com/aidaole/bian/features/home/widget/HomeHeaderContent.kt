@@ -1,6 +1,8 @@
 package com.aidaole.bian.features.home.widget
 
 import android.util.Log
+import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -22,7 +24,8 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.aidaole.bian.features.home.StockPercentWidget
+import com.aidaole.bian.core.theme.StockDownColor
+import com.aidaole.bian.core.theme.StockUpColor
 import com.aidaole.bian.features.home.data.StockItem
 
 private const val TAG = "HeaderContent"
@@ -104,3 +107,21 @@ fun StockItemWidget(index: Int, stockItem: StockItem) {
     }
 }
 
+@Composable
+fun StockPercentWidget(percent: Float) {
+    Box(
+        modifier = Modifier
+            .background(
+                color = if (percent > 0) StockUpColor else StockDownColor,
+                shape = RoundedCornerShape(10.dp)
+            )
+            .width(80.dp)
+            .height(30.dp), contentAlignment = Alignment.Center
+    ) {
+        Text(
+            "$percent",
+            style = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.W800),
+            color = MaterialTheme.colorScheme.onSurface,
+        )
+    }
+}

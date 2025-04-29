@@ -36,7 +36,7 @@ import com.aidaole.bian.core.theme.InputFieldBg
 
 @Composable
 @OptIn(ExperimentalMaterial3Api::class)
-fun HomeAppBar(onSizeChanged: (IntSize) -> Unit) {
+fun HomeAppBar(onSizeChanged: (IntSize) -> Unit = {}) {
     androidx.compose.material3.TopAppBar(
         modifier = Modifier
             .fillMaxWidth()
