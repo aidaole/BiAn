@@ -47,7 +47,7 @@ class MainActivity : ComponentActivity() {
 @Composable
 fun MainRoute() {
     val navController = rememberNavController()
-    NavHost(navController, startDestination = "home") {
+    NavHost(navController, startDestination = "language_choose") {
         composable("home") {
             HomePage(
                 modifier = Modifier,

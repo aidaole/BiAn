@@ -44,7 +44,8 @@ android {
 
 dependencies {
 
-    implementation(libs.hilt.android) // Hilt 核心库
+    implementation(libs.hilt.android)
+    implementation(libs.androidx.foundation.android) // Hilt 核心库
     kapt(libs.hilt.compiler) // Hilt 注解处理器
     implementation(libs.hilt.navigation.compose) // Hilt 与 Compose Navigation 集成
 

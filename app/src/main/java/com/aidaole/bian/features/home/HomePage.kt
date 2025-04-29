@@ -6,6 +6,7 @@ import android.util.Log
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
+import androidx.compose.foundation.gestures.scrollBy
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -44,6 +45,7 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.State
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -59,6 +61,7 @@ import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.input.nestedscroll.NestedScrollConnection
+import androidx.compose.ui.input.nestedscroll.NestedScrollDispatcher
 import androidx.compose.ui.input.nestedscroll.NestedScrollSource
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.platform.LocalConfiguration
@@ -74,6 +77,8 @@ import com.aidaole.bian.R
 import com.aidaole.bian.core.theme.InputFieldBg
 import com.aidaole.bian.core.theme.StockDownColor
 import com.aidaole.bian.core.theme.StockUpColor
+import com.aidaole.bian.features.home.data.StockItem
+import com.aidaole.bian.features.home.widget.HomePageNestedScrollConnection
 import kotlinx.coroutines.launch
 
 @Preview
@@ -93,34 +98,6 @@ private fun HomePagePreview() {
 
 private const val TAG = "HomePage"
 
-private class HomePageNestedScrollConnection(
-    private val onStickyHeaderPinned: (Boolean) -> Unit,
-    private val listState: LazyListState
-) : NestedScrollConnection {
-    override fun onPreScroll(available: Offset, source: NestedScrollSource): Offset {
-        // 获取 stickyHeader 的位置信息
-        val layoutInfo = listState.layoutInfo
-        val stickyHeaderItem = layoutInfo.visibleItemsInfo.find { it.key == "stickyHeader" }
-        val isPinned =
-            stickyHeaderItem != null && stickyHeaderItem.offset <= layoutInfo.viewportStartOffset
-        onStickyHeaderPinned(isPinned)
-        return Offset.Zero
-    }
-
-    override fun onPostScroll(
-        consumed: Offset,
-        available: Offset,
-        source: NestedScrollSource
-    ): Offset {
-        // 获取 stickyHeader 的位置信息
-        val layoutInfo = listState.layoutInfo
-        val stickyHeaderItem = layoutInfo.visibleItemsInfo.find { it.key == "stickyHeader" }
-        val isPinned =
-            stickyHeaderItem != null && stickyHeaderItem.offset <= layoutInfo.viewportStartOffset
-        onStickyHeaderPinned(isPinned)
-        return Offset.Zero
-    }
-}
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalFoundationApi::class)
 @SuppressLint("UnusedMaterial3ScaffoldPaddingParameter")
@@ -185,38 +162,8 @@ fun HomePage(
                 .padding(innerPadding)
                 .padding(horizontal = 20.dp)
         ) {
-            item(key = "header") {
-                // 顶部内容
-                Column {
-                    Spacer(Modifier.height(10.dp))
-                    Text(
-                        "欢迎探索数字资产的世界!",
-                        style = MaterialTheme.typography.titleLarge.copy(
-                            fontWeight = FontWeight.W800,
-                            fontSize = 28.sp
-                        )
-                    )
-                    Spacer(Modifier.height(30.dp))
-                    Button(
-                        modifier = Modifier.width(180.dp),
-                        shape = RoundedCornerShape(10.dp),
-                        onClick = { onLoginClicked.invoke() }
-                    ) {
-                        Text("注册/登陆", style = MaterialTheme.typography.bodyMedium)
-                    }
-                    Spacer(Modifier.height(30.dp))
-                    StockList(stockItems)
-                    Spacer(Modifier.height(20.dp))
-                    Text(
-                        "查看350余种代币",
-                        modifier = Modifier.fillMaxWidth(),
-                        textAlign = TextAlign.Center,
-                        style = MaterialTheme.typography.bodyMedium.copy(
-                            color = MaterialTheme.colorScheme.primary,
-                            fontWeight = FontWeight.W800
-                        )
-                    )
-                }
+            item(key = "HeaderContent") {
+                HeaderContent(stockItems, onLoginClicked)
             }
             stickyHeader(key = "stickyHeader") {
                 IconInfosTabRow(
@@ -230,6 +177,7 @@ fun HomePage(
             item(key = "tabs") {
                 // 计算Pager高度，考虑内边距
                 val pagerHeight = screenHeight - innerPadding.calculateTopPadding()
+                Log.d(TAG, "pagerHeight: $pagerHeight")
                 IconInfosPager(
                     pagerState = pagerState,
                     tabContents = listOf(
@@ -240,6 +188,43 @@ fun HomePage(
                 )
             }
         }
+    }
+}
+
+@Composable
+fun HeaderContent(
+    stockItems: State<List<StockItem>>,
+    onLoginClicked: () -> Unit
+) {
+    Column {
+        Spacer(Modifier.height(10.dp))
+        Text(
+            "欢迎探索数字资产的世界!",
+            style = MaterialTheme.typography.titleLarge.copy(
+                fontWeight = FontWeight.W800,
+                fontSize = 28.sp
+            )
+        )
+        Spacer(Modifier.height(30.dp))
+        Button(
+            modifier = Modifier.width(180.dp),
+            shape = RoundedCornerShape(10.dp),
+            onClick = { onLoginClicked.invoke() }
+        ) {
+            Text("注册/登陆", style = MaterialTheme.typography.bodyMedium)
+        }
+        Spacer(Modifier.height(30.dp))
+        StockList(stockItems)
+        Spacer(Modifier.height(20.dp))
+        Text(
+            "查看350余种代币",
+            modifier = Modifier.fillMaxWidth(),
+            textAlign = TextAlign.Center,
+            style = MaterialTheme.typography.bodyMedium.copy(
+                color = MaterialTheme.colorScheme.primary,
+                fontWeight = FontWeight.W800
+            )
+        )
     }
 }
 
@@ -260,8 +245,8 @@ private fun TabContent(isStickyHeaderPinned: Boolean, title: String) {
                     }
                     return Offset.Zero
                 }
-            }),
-        userScrollEnabled = isStickyHeaderPinned
+            },
+            ),
     ) {
         items(50) {
             Text(
@@ -280,14 +265,6 @@ private fun StockList(stockItems: State<List<StockItem>>) {
         StockItemWidget(index, item)
     }
 }
-
-data class StockItem(
-    val name: String,
-    val withFire: Boolean,
-    val price: Float,
-    val convertPrice: Float,
-    val percent: Float
-)
 
 @Composable
 fun StockItemWidget(index: Int, stockItem: StockItem) {
@@ -336,7 +313,6 @@ fun StockPercentWidget(percent: Float) {
             color = MaterialTheme.colorScheme.onSurface,
         )
     }
-
 }
 
 @Composable
