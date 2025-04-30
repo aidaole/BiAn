@@ -1,31 +1,40 @@
 package com.aidaole.bian.features.home.widget
 
 import android.util.Log
+import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.interaction.MutableInteractionSource
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.PagerState
 import androidx.compose.foundation.pager.rememberPagerState
-import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Tab
-import androidx.compose.material3.TabRow
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.composed
 import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.nestedscroll.NestedScrollConnection
 import androidx.compose.ui.input.nestedscroll.NestedScrollDispatcher
 import androidx.compose.ui.input.nestedscroll.NestedScrollSource
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.layout.onSizeChanged
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.dp
 import kotlinx.coroutines.launch
@@ -103,7 +112,6 @@ private fun TabContent(
     }
 }
 
-
 @Composable
 fun IconInfosTabRow(
     tabTitles: List<String>,
@@ -111,17 +119,50 @@ fun IconInfosTabRow(
     onTabSelected: (Int) -> Unit,
     onSizeChanged: (IntSize) -> Unit = {}
 ) {
-    TabRow(selectedTabIndex = pagerState.currentPage,
-        containerColor = MaterialTheme.colorScheme.background,
-        modifier = Modifier.onSizeChanged { size ->
-            onSizeChanged.invoke(size)
-            Log.d(TAG, "IconInfosTabRow: ${size.height}")
-        }) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .onSizeChanged { size ->
+                onSizeChanged.invoke(size)
+                Log.d(TAG, "IconInfosTabRow: ${size.height}")
+            }
+            .padding(horizontal = 16.dp),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
         tabTitles.forEachIndexed { index, title ->
-            Tab(
-                selected = pagerState.currentPage == index,
-                onClick = { onTabSelected(index) },
-                text = { Text(title) })
+            Column(
+                horizontalAlignment = Alignment.CenterHorizontally,
+                modifier = Modifier.noRippleClickable { onTabSelected(index) }
+            ) {
+                Text(
+                    text = title,
+                    color = if (pagerState.currentPage == index) {
+                        MaterialTheme.colorScheme.primary
+                    } else {
+                        Color(0xFF666666)
+                    },
+                    style = MaterialTheme.typography.bodyLarge,
+                    fontWeight = if (pagerState.currentPage == index) FontWeight.Bold else FontWeight.Normal,
+                    modifier = Modifier.padding(vertical = 12.dp)
+                )
+                if (pagerState.currentPage == index) {
+                    Box(
+                        modifier = Modifier
+                            .width(12.dp)
+                            .height(2.dp)
+                            .offset(y = (-8).dp)
+                            .background(
+                                color = MaterialTheme.colorScheme.primary,
+                                shape = MaterialTheme.shapes.small
+                            )
+                    )
+                } else {
+                    Spacer(modifier = Modifier.height(2.dp))
+                }
+            }
+            if (index < tabTitles.size - 1) {
+                Spacer(modifier = Modifier.width(24.dp))
+            }
         }
     }
 }
@@ -134,5 +175,16 @@ fun IconInfosPager(
         state = pagerState, modifier = modifier.fillMaxWidth()
     ) { page ->
         tabContents[page]()
+    }
+}
+
+// Add this composable function for clickable without ripple effect
+@Composable
+fun Modifier.noRippleClickable(onClick: () -> Unit): Modifier = composed {
+    clickable(
+        indication = null,
+        interactionSource = remember { MutableInteractionSource() }
+    ) {
+        onClick()
     }
 }
