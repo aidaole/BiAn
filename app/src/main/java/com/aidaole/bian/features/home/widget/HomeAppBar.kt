@@ -21,6 +21,8 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
+import androidx.compose.material3.TopAppBar
+import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -37,7 +39,7 @@ import com.aidaole.bian.core.theme.InputFieldBg
 @Composable
 @OptIn(ExperimentalMaterial3Api::class)
 fun HomeAppBar(onSizeChanged: (IntSize) -> Unit = {}) {
-    androidx.compose.material3.TopAppBar(
+    TopAppBar(
         modifier = Modifier
             .fillMaxWidth()
             .onSizeChanged { size ->
@@ -63,7 +65,10 @@ fun HomeAppBar(onSizeChanged: (IntSize) -> Unit = {}) {
             SearchBarIcon(imageVector = Icons.Outlined.Email)
             SearchBarIcon(imageVector = Icons.Default.AddCard)
             Spacer(Modifier.width(20.dp))
-        }
+        },
+        colors = TopAppBarDefaults.topAppBarColors(
+            containerColor = MaterialTheme.colorScheme.background
+        )
     )
 }
 

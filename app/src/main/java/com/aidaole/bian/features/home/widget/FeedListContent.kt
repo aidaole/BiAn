@@ -2,6 +2,7 @@ package com.aidaole.bian.features.home.widget
 
 import android.util.Log
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -11,6 +12,8 @@ import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.PagerState
 import androidx.compose.foundation.pager.rememberPagerState
+import androidx.compose.material3.HorizontalDivider
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Tab
 import androidx.compose.material3.TabRow
 import androidx.compose.material3.Text
@@ -48,9 +51,6 @@ fun FeedListPagers(
             onTabSelected = { index ->
                 coroutineScope.launch { pagerState.animateScrollToPage(index) }
             },
-            onSizeChanged = {
-
-            }
         )
         IconInfosPager(
             pagerState = pagerState,
@@ -109,12 +109,14 @@ fun IconInfosTabRow(
     tabTitles: List<String>,
     pagerState: PagerState,
     onTabSelected: (Int) -> Unit,
-    onSizeChanged: (IntSize) -> Unit
+    onSizeChanged: (IntSize) -> Unit = {}
 ) {
-    TabRow(selectedTabIndex = pagerState.currentPage, modifier = Modifier.onSizeChanged { size ->
-        onSizeChanged.invoke(size)
-        Log.d(TAG, "IconInfosTabRow: ${size.height}")
-    }) {
+    TabRow(selectedTabIndex = pagerState.currentPage,
+        containerColor = MaterialTheme.colorScheme.background,
+        modifier = Modifier.onSizeChanged { size ->
+            onSizeChanged.invoke(size)
+            Log.d(TAG, "IconInfosTabRow: ${size.height}")
+        }) {
         tabTitles.forEachIndexed { index, title ->
             Tab(
                 selected = pagerState.currentPage == index,

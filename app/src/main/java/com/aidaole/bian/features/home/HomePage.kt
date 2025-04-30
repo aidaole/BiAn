@@ -8,8 +8,10 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Scaffold
@@ -93,7 +95,6 @@ fun HomePage(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(innerPadding)
-                .padding(horizontal = 20.dp)
                 .onSizeChanged { size ->
                     allHeight = size.height
                 }
@@ -122,14 +123,19 @@ fun HomePage(
                 )
         ) {
             HomeHeaderContent(
-                modifier = Modifier.onSizeChanged { size ->
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 20.dp)
+                    .onSizeChanged { size ->
                     stockListHeight = size.height
                 },
                 stockItems,
                 onLoginClicked
             )
             FeedListPagers(
-                modifier = Modifier.height(allHeightDp),
+                modifier = Modifier
+                    .height(allHeightDp)
+                    .padding(horizontal = 20.dp),
                 isStickyHeaderPinned,
                 outerDispatcher
             )
