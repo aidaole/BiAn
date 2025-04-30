@@ -18,9 +18,9 @@ import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navOptions
 import com.aidaole.bian.core.route.Route
 import com.aidaole.bian.core.theme.BiAnTheme
-import com.aidaole.bian.features.home.HomePage
 import com.aidaole.bian.features.language.LanguageChoosePage
 import com.aidaole.bian.features.login.LoginPage
+import com.aidaole.bian.features.main.MainPage
 import dagger.hilt.android.AndroidEntryPoint
 
 @AndroidEntryPoint
@@ -44,7 +44,7 @@ fun MainRoute() {
     val navController = rememberNavController()
     NavHost(navController, startDestination = Route.MainPageData("")) {
         composable<Route.MainPageData> {
-            HomePage(
+            MainPage(
                 onLoginClicked = {
                     navController.navigate(Route.LoginPageData(""), navOptions = navOptions {
                         anim {
