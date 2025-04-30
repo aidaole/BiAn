@@ -48,6 +48,7 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.toRoute
+import com.aidaole.bian.core.route.Route
 import kotlinx.serialization.Serializable
 
 private const val TAG = "HomePage"
@@ -67,8 +68,7 @@ private fun HomePagePreview() {
     }
 }
 
-@Serializable
-data class HomePageData(val tag: String)
+
 
 @SuppressLint("UnusedMaterial3ScaffoldPaddingParameter")
 @Composable
@@ -111,11 +111,11 @@ fun HomePage(
                 onItemSelected = { index ->
                     selectedItem = index
                     when (index) {
-                        0 -> navController.navigate(HomePageData("home"))
-                        1 -> navController.navigate(HomePageData("market"))
-                        2 -> navController.navigate(HomePageData("trade"))
-                        3 -> navController.navigate(HomePageData("contract"))
-                        4 -> navController.navigate(HomePageData("profile"))
+                        0 -> navController.navigate(Route.HomePageData("home"))
+                        1 -> navController.navigate(Route.HomePageData("market"))
+                        2 -> navController.navigate(Route.HomePageData("trade"))
+                        3 -> navController.navigate(Route.HomePageData("contract"))
+                        4 -> navController.navigate(Route.HomePageData("profile"))
                     }
                 }
             )
@@ -123,10 +123,10 @@ fun HomePage(
     ) { innerPadding ->
         NavHost(
             navController = navController,
-            startDestination = HomePageData("home")
+            startDestination = Route.HomePageData("home")
         ) {
-            composable<HomePageData> { backStackEntry ->
-                val data = backStackEntry.toRoute<HomePageData>()
+            composable<Route.HomePageData> { backStackEntry ->
+                val data = backStackEntry.toRoute<Route.HomePageData>()
                 when (data.tag) {
                     "home" -> {
                         Column(
