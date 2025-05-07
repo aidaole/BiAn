@@ -37,6 +37,7 @@ import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.dp
+import com.aidaole.bian.features.home.data.FeedTabInfo
 import kotlinx.coroutines.launch
 
 private const val TAG = "FeedListContent"
@@ -47,7 +48,10 @@ fun FeedListPagers(
     isStickyHeaderPinned: Boolean,
     outerDispatcher: NestedScrollDispatcher
 ) {
-    val tabTitles = listOf("火币", "币安")
+    val tabTitles = listOf(
+        FeedTabInfo(0, "发现"),
+        FeedTabInfo(1, "关注"),
+    )
     val pagerState = rememberPagerState { tabTitles.size }
     val coroutineScope = rememberCoroutineScope()
 
@@ -63,10 +67,9 @@ fun FeedListPagers(
         )
         IconInfosPager(
             pagerState = pagerState,
-            tabContents = listOf(
-                { TabContent(isStickyHeaderPinned, "火币", outerDispatcher) },
-                { TabContent(isStickyHeaderPinned, "BTC", outerDispatcher) }
-            ),
+            tabContents = tabTitles.mapIndexed { index, item ->
+                { TabContent(isStickyHeaderPinned, tabTitles[index], outerDispatcher) }
+            },
             modifier = Modifier.weight(1F)
         )
     }
@@ -75,7 +78,7 @@ fun FeedListPagers(
 @Composable
 private fun TabContent(
     isStickyHeaderPinned: Boolean,
-    title: String,
+    feedTabInfo: FeedTabInfo,
     outDispatcher: NestedScrollDispatcher
 ) {
     val listState = rememberLazyListState()
@@ -103,7 +106,7 @@ private fun TabContent(
     ) {
         items(50) {
             Text(
-                "$title $it",
+                "${feedTabInfo.name} $it",
                 Modifier
                     .height(50.dp)
                     .padding(5.dp)
@@ -114,7 +117,7 @@ private fun TabContent(
 
 @Composable
 fun IconInfosTabRow(
-    tabTitles: List<String>,
+    tabTitles: List<FeedTabInfo>,
     pagerState: PagerState,
     onTabSelected: (Int) -> Unit,
     onSizeChanged: (IntSize) -> Unit = {}
@@ -129,13 +132,13 @@ fun IconInfosTabRow(
             .padding(horizontal = 16.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
-        tabTitles.forEachIndexed { index, title ->
+        tabTitles.forEachIndexed { index, feedTabInfo ->
             Column(
                 horizontalAlignment = Alignment.CenterHorizontally,
                 modifier = Modifier.noRippleClickable { onTabSelected(index) }
             ) {
                 Text(
-                    text = title,
+                    text = feedTabInfo.name,
                     color = if (pagerState.currentPage == index) {
                         MaterialTheme.colorScheme.primary
                     } else {
