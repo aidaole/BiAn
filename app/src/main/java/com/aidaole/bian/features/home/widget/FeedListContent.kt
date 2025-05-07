@@ -92,12 +92,16 @@ private fun TabContent(
             .nestedScroll(object : NestedScrollConnection {
                 override fun onPreScroll(available: Offset, source: NestedScrollSource): Offset {
                     val delta = available.y
-                    return if (!isStickyHeaderPinned && delta < 0) {  // 向上滑动且未吸顶
-                        // 分发滑动事件给外层LazyColumn
+                    // 如果列表在顶部且向上滑动，或者列表不在顶部，则处理滚动
+                    val shouldHandleScroll = (listState.firstVisibleItemIndex == 0 && listState.firstVisibleItemScrollOffset == 0 && delta < 0) || 
+                                          listState.firstVisibleItemIndex > 0 || 
+                                          listState.firstVisibleItemScrollOffset > 0
+                    
+                    return if (shouldHandleScroll) {
                         val parentConsumed = outDispatcher.dispatchPreScroll(
                             available = available, source = source
                         )
-                        Log.d(TAG, "Parent consumes scroll: $available, consumed: $parentConsumed")
+                        Log.d(TAG, "PreScroll - available: $available, consumed: $parentConsumed, firstVisibleItem: ${listState.firstVisibleItemIndex}, offset: ${listState.firstVisibleItemScrollOffset}")
                         parentConsumed
                     } else {
                         Offset.Zero
@@ -105,24 +109,43 @@ private fun TabContent(
                 }
 
                 override fun onPostScroll(consumed: Offset, available: Offset, source: NestedScrollSource): Offset {
-                    return if (!isStickyHeaderPinned && available.y < 0) {
-                        outDispatcher.dispatchPostScroll(consumed, available, source)
+                    val delta = available.y
+                    val shouldHandleScroll = (listState.firstVisibleItemIndex == 0 && listState.firstVisibleItemScrollOffset == 0 && delta < 0) || 
+                                          listState.firstVisibleItemIndex > 0 || 
+                                          listState.firstVisibleItemScrollOffset > 0
+                    
+                    return if (shouldHandleScroll) {
+                        val parentConsumed = outDispatcher.dispatchPostScroll(consumed, available, source)
+                        Log.d(TAG, "PostScroll - available: $available, consumed: $parentConsumed, firstVisibleItem: ${listState.firstVisibleItemIndex}, offset: ${listState.firstVisibleItemScrollOffset}")
+                        parentConsumed
                     } else {
                         Offset.Zero
                     }
                 }
 
                 override suspend fun onPreFling(available: Velocity): Velocity {
-                    return if (!isStickyHeaderPinned && available.y < 0) {
-                        outDispatcher.dispatchPreFling(available)
+                    val shouldHandleFling = (listState.firstVisibleItemIndex == 0 && listState.firstVisibleItemScrollOffset == 0 && available.y < 0) || 
+                                         listState.firstVisibleItemIndex > 0 || 
+                                         listState.firstVisibleItemScrollOffset > 0
+                    
+                    return if (shouldHandleFling) {
+                        val parentConsumed = outDispatcher.dispatchPreFling(available)
+                        Log.d(TAG, "PreFling - available: $available, consumed: $parentConsumed, firstVisibleItem: ${listState.firstVisibleItemIndex}, offset: ${listState.firstVisibleItemScrollOffset}")
+                        parentConsumed
                     } else {
                         Velocity.Zero
                     }
                 }
 
                 override suspend fun onPostFling(consumed: Velocity, available: Velocity): Velocity {
-                    return if (!isStickyHeaderPinned && available.y < 0) {
-                        outDispatcher.dispatchPostFling(consumed, available)
+                    val shouldHandleFling = (listState.firstVisibleItemIndex == 0 && listState.firstVisibleItemScrollOffset == 0 && available.y < 0) || 
+                                         listState.firstVisibleItemIndex > 0 || 
+                                         listState.firstVisibleItemScrollOffset > 0
+                    
+                    return if (shouldHandleFling) {
+                        val parentConsumed = outDispatcher.dispatchPostFling(consumed, available)
+                        Log.d(TAG, "PostFling - available: $available, consumed: $parentConsumed, firstVisibleItem: ${listState.firstVisibleItemIndex}, offset: ${listState.firstVisibleItemScrollOffset}")
+                        parentConsumed
                     } else {
                         Velocity.Zero
                     }
