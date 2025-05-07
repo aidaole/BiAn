@@ -36,6 +36,7 @@ import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.IntSize
+import androidx.compose.ui.unit.Velocity
 import androidx.compose.ui.unit.dp
 import com.aidaole.bian.features.home.data.FeedTabInfo
 import kotlinx.coroutines.launch
@@ -100,6 +101,30 @@ private fun TabContent(
                         parentConsumed
                     } else {
                         Offset.Zero
+                    }
+                }
+
+                override fun onPostScroll(consumed: Offset, available: Offset, source: NestedScrollSource): Offset {
+                    return if (!isStickyHeaderPinned && available.y < 0) {
+                        outDispatcher.dispatchPostScroll(consumed, available, source)
+                    } else {
+                        Offset.Zero
+                    }
+                }
+
+                override suspend fun onPreFling(available: Velocity): Velocity {
+                    return if (!isStickyHeaderPinned && available.y < 0) {
+                        outDispatcher.dispatchPreFling(available)
+                    } else {
+                        Velocity.Zero
+                    }
+                }
+
+                override suspend fun onPostFling(consumed: Velocity, available: Velocity): Velocity {
+                    return if (!isStickyHeaderPinned && available.y < 0) {
+                        outDispatcher.dispatchPostFling(consumed, available)
+                    } else {
+                        Velocity.Zero
                     }
                 }
             }),
