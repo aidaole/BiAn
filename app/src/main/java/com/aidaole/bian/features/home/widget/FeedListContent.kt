@@ -105,12 +105,8 @@ private fun TabContent(
             }),
     ) {
         items(50) {
-            Text(
-                "${feedTabInfo.name} $it",
-                Modifier
-                    .height(50.dp)
-                    .padding(5.dp)
-            )
+            FeedExploreItemWidget()
+            Spacer(Modifier.height(10.dp))
         }
     }
 }

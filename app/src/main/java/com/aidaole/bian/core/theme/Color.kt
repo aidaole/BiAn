@@ -14,3 +14,5 @@ val ButtonBorderColor = Color(0xFFEBECF0)
 
 val StockUpColor: Color = Color(0xFF2EBD85)
 val StockDownColor = Color(0xFFF6465D)
+
+val TextGray = Color(0xFF889092)
