@@ -104,7 +104,6 @@ fun MainPage(
                     onLoginClicked = {
                         onLoginClicked.invoke()
                     }, bottomBarHeight = bottomBarHeight,
-                    outerScrollState = homeOuterScrollState
                 )
             }
             composable<Route.MarketPageData> {

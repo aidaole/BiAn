@@ -2,7 +2,6 @@ package com.aidaole.bian.features.home
 
 import android.annotation.SuppressLint
 import android.app.Application
-import android.util.Log
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.ScrollState
 import androidx.compose.foundation.layout.Box
@@ -12,12 +11,9 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.verticalScroll
-import androidx.compose.material3.Button
 import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.derivedStateOf
@@ -26,12 +22,9 @@ import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.geometry.Offset
-import androidx.compose.ui.input.nestedscroll.NestedScrollConnection
 import androidx.compose.ui.input.nestedscroll.NestedScrollDispatcher
-import androidx.compose.ui.input.nestedscroll.NestedScrollSource
-import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.layout.onSizeChanged
+import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.tooling.preview.Preview
@@ -53,7 +46,6 @@ private fun HomePagePreview() {
             Spacer(Modifier.height(30.dp))
             HomePage(
                 homeViewModel = HomeViewModel(Application()),
-                outerScrollState = rememberScrollState()
             )
         }
 
@@ -61,22 +53,24 @@ private fun HomePagePreview() {
 }
 
 
-@SuppressLint("UnusedMaterial3ScaffoldPaddingParameter")
+@SuppressLint("UnusedMaterial3ScaffoldPaddingParameter", "ConfigurationScreenWidthHeight")
 @Composable
 fun HomePage(
     homeViewModel: HomeViewModel = hiltViewModel(),
     onLoginClicked: () -> Unit = {},
     bottomBarHeight: Int = 0,
-    outerScrollState: ScrollState
 ) {
     val stockItems = homeViewModel.stockItems.collectAsState()
-    val counter = homeViewModel.counter.collectAsState()
-
     val outerDispatcher = remember { NestedScrollDispatcher() }
+    val outerScrollState = rememberScrollState()
 
     var allHeight by remember { mutableIntStateOf(0) }
     val allHeightDp = with(LocalDensity.current) { allHeight.toDp() }
     var stockListHeight by remember { mutableIntStateOf(0) }
+
+    // 获取屏幕高度
+    val screenHeight = LocalConfiguration.current.screenHeightDp.dp
+    val density = LocalDensity.current
 
     // 计算 IconInfosTabRow 是否到顶
     val isStickyHeaderPinned by remember(outerScrollState) {
@@ -96,54 +90,43 @@ fun HomePage(
             Spacer(Modifier.height(with(LocalDensity.current) { bottomBarHeight.toDp() }))
         }
     ) { innerPadding ->
-        Column(
+        LazyColumn(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(innerPadding)
                 .onSizeChanged { size ->
                     allHeight = size.height
                 }
-                .verticalScroll(outerScrollState)
-                .nestedScroll(
-                    dispatcher = outerDispatcher,
-                    connection = object : NestedScrollConnection {
-                        override fun onPreScroll(
-                            available: Offset,
-                            source: NestedScrollSource
-                        ): Offset {
-                            val delta = available.y
-                            if (delta < 0) {
-                                val actual = if (outerScrollState.value - delta > stockListHeight) {
-                                    outerScrollState.value - stockListHeight.toFloat()
-                                } else {
-                                    delta
-                                }
-                                outerScrollState.dispatchRawDelta(-actual)
-                                return Offset(0f, actual)
-                            } else {
-                                return Offset.Zero
-                            }
-                        }
-                    }
-                )
         ) {
-            HomeHeaderContent(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 20.dp)
-                    .onSizeChanged { size ->
-                    stockListHeight = size.height
-                },
-                stockItems,
-                onLoginClicked
-            )
-            FeedListPagers(
-                modifier = Modifier
-                    .height(allHeightDp)
-                    .padding(horizontal = 20.dp),
-                isStickyHeaderPinned,
-                outerDispatcher
-            )
+            item {
+                HomeHeaderContent(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 20.dp)
+                        .onSizeChanged { size ->
+                            stockListHeight = size.height
+                        },
+                    stockItems,
+                    onLoginClicked
+                )
+            }
+            item {
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(screenHeight - with(density) {
+                            (bottomBarHeight + innerPadding.calculateTopPadding().toPx()).toDp()
+                        })
+                ) {
+                    FeedListPagers(
+                        modifier = Modifier
+                            .height(allHeightDp)
+                            .padding(horizontal = 20.dp),
+                        isStickyHeaderPinned,
+                        outerDispatcher
+                    )
+                }
+            }
         }
     }
 }
