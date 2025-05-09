@@ -14,5 +14,17 @@ class Route {
     data class LanguageChoosePageData(val ext: String)
 
     @Serializable
-    data class HomePageData(val tag: String)
+    data class HomePageData(val ext: String)
+
+    @Serializable
+    data class MarketPageData(val ext: String)
+
+    @Serializable
+    data class TradePageData(val ext: String)
+
+    @Serializable
+    data class ContractPageData(val ext: String)
+
+    @Serializable
+    data class ProfilePageData(val ext: String)
 }

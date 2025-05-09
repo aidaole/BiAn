@@ -82,7 +82,6 @@ private fun StockList(stockItems: State<List<StockItem>>) {
 
 @Composable
 fun StockItemWidget(index: Int, stockItem: StockItem) {
-    Log.d(TAG, "StockItemWidget: $index")
     Row(
         modifier = Modifier
             .fillMaxWidth()

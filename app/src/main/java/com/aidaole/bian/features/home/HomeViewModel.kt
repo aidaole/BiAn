@@ -13,6 +13,10 @@ class HomeViewModel @Inject constructor(
 ) : AndroidViewModel(
     application = application
 ) {
+    fun addCounter() {
+        counter.value += 1
+    }
+
     val stockItems = MutableStateFlow(
         listOf(
             StockItem("BNB", true, 604.28F, 4411.24F, -1.78F),
@@ -23,4 +27,6 @@ class HomeViewModel @Inject constructor(
             StockItem("BTC", true, 93196.73F, 680336.24F, 0.38F),
         )
     )
+
+    val counter = MutableStateFlow(0)
 }

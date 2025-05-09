@@ -4,6 +4,7 @@ import android.annotation.SuppressLint
 import android.app.Application
 import android.util.Log
 import androidx.compose.foundation.Image
+import androidx.compose.foundation.ScrollState
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
@@ -14,7 +15,9 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material3.Button
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.derivedStateOf
@@ -49,7 +52,8 @@ private fun HomePagePreview() {
         Column {
             Spacer(Modifier.height(30.dp))
             HomePage(
-                homeViewModel = HomeViewModel(Application())
+                homeViewModel = HomeViewModel(Application()),
+                outerScrollState = rememberScrollState()
             )
         }
 
@@ -62,12 +66,13 @@ private fun HomePagePreview() {
 fun HomePage(
     homeViewModel: HomeViewModel = hiltViewModel(),
     onLoginClicked: () -> Unit = {},
-    bottomBarHeight: Int = 0
+    bottomBarHeight: Int = 0,
+    outerScrollState: ScrollState
 ) {
     val stockItems = homeViewModel.stockItems.collectAsState()
+    val counter = homeViewModel.counter.collectAsState()
 
     val outerDispatcher = remember { NestedScrollDispatcher() }
-    val outerScrollState = rememberScrollState()
 
     var allHeight by remember { mutableIntStateOf(0) }
     val allHeightDp = with(LocalDensity.current) { allHeight.toDp() }
@@ -78,7 +83,7 @@ fun HomePage(
         derivedStateOf {
             // 向上滑动的距离超过展示的stockListHeight高度, 说明tabRow已经到顶
             val pinned = outerScrollState.value >= stockListHeight
-            Log.d(TAG, "isStickyHeaderPinned: $pinned, scrollState: ${outerScrollState.value}")
+//            Log.d(TAG, "isStickyHeaderPinned: $pinned, scrollState: ${outerScrollState.value}")
             pinned
         }
     }
