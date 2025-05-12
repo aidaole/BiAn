@@ -30,15 +30,16 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.aidaole.bian.core.theme.TextGray
+import com.aidaole.bian.features.home.data.FeedTabInfo
 
 @Preview
 @Composable
-fun FeedExploreitemWidgetPreview(modifier: Modifier = Modifier) {
-    FeedExploreItemWidget()
+fun FeedExploreItemWidgetPreview(modifier: Modifier = Modifier) {
+    FeedExploreItemWidget(feedTabInfo = FeedTabInfo(1, "关注"))
 }
 
 @Composable
-fun FeedExploreItemWidget(modifier: Modifier = Modifier) {
+fun FeedExploreItemWidget(modifier: Modifier = Modifier, feedTabInfo: FeedTabInfo) {
     Column(
         modifier = modifier.height(150.dp),
     ) {
@@ -65,7 +66,7 @@ fun FeedExploreItemWidget(modifier: Modifier = Modifier) {
             Spacer(Modifier.width(10.dp))
         }
 
-        Text("content")
+        Text("${feedTabInfo.name} 中的内容")
 
         Row(
             modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceEvenly

@@ -15,7 +15,7 @@ import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.rememberLazyListState
+import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.PagerState
 import androidx.compose.foundation.pager.rememberPagerState
@@ -24,6 +24,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.composed
@@ -51,6 +52,8 @@ fun FeedListPagers(
     val tabTitles = listOf(
         FeedTabInfo(0, "发现"),
         FeedTabInfo(1, "关注"),
+        FeedTabInfo(2, "新闻"),
+        FeedTabInfo(3, "热点"),
     )
     val pagerState = rememberPagerState { tabTitles.size }
     val coroutineScope = rememberCoroutineScope()
@@ -81,16 +84,22 @@ private fun TabContent(
     feedTabInfo: FeedTabInfo,
     outDispatcher: NestedScrollDispatcher
 ) {
-    val listState = rememberLazyListState()
+    val listState = rememberSaveable(
+        key = feedTabInfo.id.toString(),
+        saver = LazyListState.Saver
+    ) {
+        LazyListState()
+    }
 
     Log.d(TAG, "TabContent: $isStickyHeaderPinned")
     LazyColumn(
         state = listState,
         modifier = Modifier
             .fillMaxSize()
-            .nestedScroll(object: NestedScrollConnection {
+            .nestedScroll(object : NestedScrollConnection {
                 override fun onPreScroll(available: Offset, source: NestedScrollSource): Offset {
-                    if (!isStickyHeaderPinned){
+                    if (!isStickyHeaderPinned) {
+                        Log.d(TAG, "onPreScroll: $available")
                         val parentCustom = outDispatcher.dispatchPreScroll(available, source)
                         return parentCustom
                     } else {
@@ -100,7 +109,7 @@ private fun TabContent(
             })
     ) {
         items(50) {
-            FeedExploreItemWidget()
+            FeedExploreItemWidget(feedTabInfo = feedTabInfo)
             Spacer(Modifier.height(10.dp))
         }
     }
