@@ -58,6 +58,11 @@ fun FeedListPagers(
     val pagerState = rememberPagerState { tabTitles.size }
     val coroutineScope = rememberCoroutineScope()
 
+    // 1. 为每个 tab 创建 LazyListState，并用 rememberSaveable 保存
+    val listStates = tabTitles.associate { tab ->
+        tab.id to rememberSaveable(tab.id, saver = LazyListState.Saver) { LazyListState() }
+    }
+
     Column(
         modifier = modifier
     ) {
@@ -71,7 +76,15 @@ fun FeedListPagers(
         IconInfosPager(
             pagerState = pagerState,
             tabContents = tabTitles.mapIndexed { index, item ->
-                { TabContent(isStickyHeaderPinned, tabTitles[index], outerDispatcher) }
+                {
+                    // 2. 传递 LazyListState
+                    TabContent(
+                        isStickyHeaderPinned,
+                        tabTitles[index],
+                        outerDispatcher,
+                        listStates[tabTitles[index].id]!!
+                    )
+                }
             },
             modifier = Modifier.weight(1F)
         )
@@ -82,15 +95,9 @@ fun FeedListPagers(
 private fun TabContent(
     isStickyHeaderPinned: Boolean,
     feedTabInfo: FeedTabInfo,
-    outDispatcher: NestedScrollDispatcher
+    outDispatcher: NestedScrollDispatcher,
+    listState: LazyListState
 ) {
-    val listState = rememberSaveable(
-        key = feedTabInfo.id.toString(),
-        saver = LazyListState.Saver
-    ) {
-        LazyListState()
-    }
-
     Log.d(TAG, "TabContent: $isStickyHeaderPinned")
     LazyColumn(
         state = listState,
