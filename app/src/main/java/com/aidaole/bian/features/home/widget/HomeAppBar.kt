@@ -52,9 +52,9 @@ fun HomeAppBar(onSizeChanged: (IntSize) -> Unit = {}) {
                 Icon(
                     modifier = Modifier
                         .size(35.dp)
-                        .padding(5.dp),
+                        .padding(2.dp),
                     contentDescription = "",
-                    painter = painterResource(R.drawable.google),
+                    painter = painterResource(R.drawable.bian_icon),
                     tint = Color.Unspecified
                 )
             }
