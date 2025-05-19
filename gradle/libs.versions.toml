@@ -13,6 +13,8 @@ materialIconsVersion = "1.7.8"
 hilt = "2.51.1" # 最新版本，建议检查 https://dagger.dev/hilt/ 确认最新版本
 hiltNavigationCompose = "1.2.0"
 foundationAndroid = "1.8.0" # Hilt 与 Compose 导航的集成库
+coil = "3.2.0"
+kotlin_serialization = "1.6.0"
 
 [libraries]
 androidx-core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "coreKtx" }
@@ -35,6 +37,10 @@ hilt-android = { module = "com.google.dagger:hilt-android", version.ref = "hilt"
 hilt-compiler = { module = "com.google.dagger:hilt-compiler", version.ref = "hilt" }
 hilt-navigation-compose = { module = "androidx.hilt:hilt-navigation-compose", version.ref = "hiltNavigationCompose" }
 androidx-foundation-android = { group = "androidx.compose.foundation", name = "foundation-android", version.ref = "foundationAndroid" }
+coil-compose = { group = "io.coil-kt.coil3", name = "coil-compose", version.ref = "coil" }
+coil-okhttp3 = { group = "io.coil-kt.coil3", name = "coil-network-okhttp", version.ref = "coil" }
+kotlin-serialization = { group = "org.jetbrains.kotlinx", name = "kotlinx-serialization-json", version.ref = "kotlin_serialization" }
+
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }

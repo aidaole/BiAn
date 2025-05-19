@@ -69,5 +69,8 @@ dependencies {
     debugImplementation(libs.androidx.ui.test.manifest)
 
     // Kotlin Serialization
-    implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.6.2")
+    implementation(libs.kotlin.serialization)
+    // coil
+    implementation(libs.coil.compose)
+    implementation(libs.coil.okhttp3)
 }

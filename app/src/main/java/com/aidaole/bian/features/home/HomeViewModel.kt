@@ -34,12 +34,6 @@ class HomeViewModel @Inject constructor(
         )
     )
 
-    val homeFeedTabInfo = listOf(
-        FeedTabInfo(0, "发现"),
-        FeedTabInfo(1, "关注"),
-        FeedTabInfo(2, "新闻"),
-        FeedTabInfo(3, "热点"),
-    )
     val homeFeedTabs = MutableStateFlow<List<FeedTab>>(listOf())
     private val json = Json {
         ignoreUnknownKeys = true

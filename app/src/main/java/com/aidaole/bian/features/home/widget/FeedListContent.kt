@@ -114,6 +114,7 @@ private fun TabContent(
         feedTab.contents.forEach {
             item {
                 FeedExploreItemWidget(feedPost = it)
+                Spacer(modifier = Modifier.height(10.dp))
             }
         }
     }
