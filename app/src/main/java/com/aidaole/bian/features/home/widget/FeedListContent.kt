@@ -1,5 +1,6 @@
 package com.aidaole.bian.features.home.widget
 
+import android.health.connect.datatypes.HeightRecord
 import android.util.Log
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -38,28 +39,23 @@ import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.dp
-import com.aidaole.bian.features.home.data.FeedTabInfo
+import com.aidaole.bian.data.entity.FeedTab
 import kotlinx.coroutines.launch
 
 private const val TAG = "FeedListContent"
 
 @Composable
 fun FeedListPagers(
+    homeFeedTabInfos: List<FeedTab>,
     modifier: Modifier = Modifier,
     isStickyHeaderPinned: Boolean,
     outerDispatcher: NestedScrollDispatcher
 ) {
-    val tabTitles = listOf(
-        FeedTabInfo(0, "发现"),
-        FeedTabInfo(1, "关注"),
-        FeedTabInfo(2, "新闻"),
-        FeedTabInfo(3, "热点"),
-    )
-    val pagerState = rememberPagerState { tabTitles.size }
+    val pagerState = rememberPagerState { homeFeedTabInfos.size }
     val coroutineScope = rememberCoroutineScope()
 
     // 1. 为每个 tab 创建 LazyListState，并用 rememberSaveable 保存
-    val listStates = tabTitles.associate { tab ->
+    val listStates = homeFeedTabInfos.associate { tab ->
         tab.id to rememberSaveable(tab.id, saver = LazyListState.Saver) { LazyListState() }
     }
 
@@ -67,7 +63,7 @@ fun FeedListPagers(
         modifier = modifier
     ) {
         IconInfosTabRow(
-            tabTitles = tabTitles,
+            tabTitles = homeFeedTabInfos,
             pagerState = pagerState,
             onTabSelected = { index ->
                 coroutineScope.launch { pagerState.animateScrollToPage(index) }
@@ -75,14 +71,14 @@ fun FeedListPagers(
         )
         IconInfosPager(
             pagerState = pagerState,
-            tabContents = tabTitles.mapIndexed { index, item ->
+            tabContents = homeFeedTabInfos.mapIndexed { index, item ->
                 {
                     // 2. 传递 LazyListState
                     TabContent(
                         isStickyHeaderPinned,
-                        tabTitles[index],
+                        homeFeedTabInfos[index],
                         outerDispatcher,
-                        listStates[tabTitles[index].id]!!
+                        listStates[homeFeedTabInfos[index].id]!!
                     )
                 }
             },
@@ -94,7 +90,7 @@ fun FeedListPagers(
 @Composable
 private fun TabContent(
     isStickyHeaderPinned: Boolean,
-    feedTabInfo: FeedTabInfo,
+    feedTab: FeedTab,
     outDispatcher: NestedScrollDispatcher,
     listState: LazyListState
 ) {
@@ -106,7 +102,7 @@ private fun TabContent(
             .nestedScroll(object : NestedScrollConnection {
                 override fun onPreScroll(available: Offset, source: NestedScrollSource): Offset {
                     if (!isStickyHeaderPinned) {
-                        Log.d(TAG, "onPreScroll: $available")
+//                        Log.d(TAG, "onPreScroll: $available")
                         val parentCustom = outDispatcher.dispatchPreScroll(available, source)
                         return parentCustom
                     } else {
@@ -115,16 +111,17 @@ private fun TabContent(
                 }
             })
     ) {
-        items(50) {
-            FeedExploreItemWidget(feedTabInfo = feedTabInfo)
-            Spacer(Modifier.height(10.dp))
+        feedTab.contents.forEach {
+            item {
+                FeedExploreItemWidget(feedPost = it)
+            }
         }
     }
 }
 
 @Composable
 fun IconInfosTabRow(
-    tabTitles: List<FeedTabInfo>,
+    tabTitles: List<FeedTab>,
     pagerState: PagerState,
     onTabSelected: (Int) -> Unit,
     onSizeChanged: (IntSize) -> Unit = {}
@@ -145,7 +142,7 @@ fun IconInfosTabRow(
                 modifier = Modifier.noRippleClickable { onTabSelected(index) }
             ) {
                 Text(
-                    text = feedTabInfo.name,
+                    text = feedTabInfo.tabName,
                     color = if (pagerState.currentPage == index) {
                         MaterialTheme.colorScheme.primary
                     } else {

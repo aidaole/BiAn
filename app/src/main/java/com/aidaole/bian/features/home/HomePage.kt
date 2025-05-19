@@ -64,18 +64,14 @@ fun HomePage(
     onLoginClicked: () -> Unit = {},
     bottomBarHeight: Int = 0,
 ) {
-    val stockItems = homeViewModel.stockItems.collectAsState()
     val outerDispatcher = remember { NestedScrollDispatcher() }
     val outerScrollState = rememberLazyListState()
-
     var allHeight by remember { mutableIntStateOf(0) }
     val allHeightDp = with(LocalDensity.current) { allHeight.toDp() }
     var stockListHeight by remember { mutableIntStateOf(0) }
-
     // 获取屏幕高度
     val screenHeight = LocalConfiguration.current.screenHeightDp.dp
     val density = LocalDensity.current
-
     // 计算头部是否滚动到顶部
     val isStickyHeaderPinned by remember {
         derivedStateOf {
@@ -83,7 +79,6 @@ fun HomePage(
             outerScrollState.firstVisibleItemIndex > 0
         }
     }
-
     // 创建一个NestedScrollConnection，用于控制外部容器的滚动
     val nestedScrollConnection = remember {
         object : NestedScrollConnection {
@@ -103,6 +98,9 @@ fun HomePage(
             }
         }
     }
+
+    val stockItems = homeViewModel.stockItems.collectAsState()
+    val homeFeedTabs by homeViewModel.homeFeedTabs.collectAsState()
 
     Scaffold(
         topBar = {
@@ -144,6 +142,7 @@ fun HomePage(
                 ) {
                     Log.d(TAG, "HomePage: isStickyHeaderPinned: $isStickyHeaderPinned")
                     FeedListPagers(
+                        homeFeedTabs,
                         modifier = Modifier
                             .height(allHeightDp)
                             .padding(horizontal = 20.dp),

@@ -1,5 +1,8 @@
 package com.aidaole.bian.features.home.widget
 
+import android.health.connect.datatypes.HeightRecord
+import android.os.Build
+import androidx.annotation.RequiresApi
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -26,23 +29,27 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.aidaole.bian.core.theme.TextGray
-import com.aidaole.bian.features.home.data.FeedTabInfo
+import com.aidaole.bian.data.entity.FeedPost
+import java.time.LocalDateTime
 
+@RequiresApi(Build.VERSION_CODES.O)
 @Preview
 @Composable
 fun FeedExploreItemWidgetPreview(modifier: Modifier = Modifier) {
-    FeedExploreItemWidget(feedTabInfo = FeedTabInfo(1, "关注"))
+    FeedExploreItemWidget(feedPost = FeedPost("Jackie", "", LocalDateTime.now(), false, ""))
 }
 
 @Composable
-fun FeedExploreItemWidget(modifier: Modifier = Modifier, feedTabInfo: FeedTabInfo) {
+fun FeedExploreItemWidget(modifier: Modifier = Modifier, feedPost: FeedPost) {
     Column(
         modifier = modifier.height(150.dp),
     ) {
+        Spacer(Modifier.height(5.dp))
         Row(
             verticalAlignment = Alignment.CenterVertically
         ) {
@@ -50,40 +57,56 @@ fun FeedExploreItemWidget(modifier: Modifier = Modifier, feedTabInfo: FeedTabInf
             Icon(Icons.Outlined.AccountCircle, contentDescription = null)
             Spacer(Modifier.width(10.dp))
             Column {
-                Text("UserName", style = MaterialTheme.typography.bodyMedium)
-                Text("time", style = MaterialTheme.typography.bodySmall, color = TextGray)
+                Text(
+                    feedPost.publisherName,
+                    style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold)
+                )
+                Text(
+                    feedPost.publishedAt.toString(),
+                    style = MaterialTheme.typography.bodySmall,
+                    color = TextGray
+                )
             }
             Spacer(modifier = Modifier.weight(1F))
             Button(
-                onClick = {}, modifier = Modifier
+                onClick = {},
+                modifier = Modifier
                     .padding(0.dp)
-                    .height(20.dp), shape = RoundedCornerShape(5.dp)
+                    .height(20.dp),
+                shape = RoundedCornerShape(5.dp)
             ) {
-                Text("关注", fontSize = 10.sp)
+                if (feedPost.isFollowed) {
+                    Text("已关注", fontSize = 10.sp)
+                } else {
+                    Text("关注", fontSize = 10.sp)
+                }
             }
             Spacer(Modifier.width(10.dp))
             Icon(Icons.Default.Menu, contentDescription = null)
             Spacer(Modifier.width(10.dp))
         }
 
-        Text("${feedTabInfo.name} 中的内容")
+        Spacer(Modifier.height(10.dp))
+        Text(feedPost.content, style = MaterialTheme.typography.bodyMedium)
+        Spacer(Modifier.height(10.dp))
 
         Row(
             modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceEvenly
         ) {
-            Icon(
-                Icons.Rounded.Image, contentDescription = null
+            BottomIcons(
+                Icons.Rounded.Image,
             )
-            Icon(
-                Icons.Rounded.Message, contentDescription = null
+            BottomIcons(
+                Icons.Rounded.Message,
             )
-            Icon(
-                Icons.Rounded.FavoriteBorder, contentDescription = null
+            BottomIcons(
+                Icons.Rounded.FavoriteBorder,
             )
-            Icon(
-                Icons.Rounded.ChairAlt, contentDescription = null
+            BottomIcons(
+                Icons.Rounded.ChairAlt,
             )
         }
+        Spacer(Modifier.height(20.dp))
     }
 }
 
@@ -93,7 +116,7 @@ fun BottomIcons(
 ) {
     Icon(
         imageVector,
-        modifier = Modifier.size(10.dp),
+        modifier = Modifier.size(16.dp),
         contentDescription = null, tint = Color.DarkGray,
     )
 }
