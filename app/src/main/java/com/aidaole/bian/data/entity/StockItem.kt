@@ -1,4 +1,4 @@
-package com.aidaole.bian.features.home.data
+package com.aidaole.bian.data.entity
 
 data class StockItem(
     val name: String,

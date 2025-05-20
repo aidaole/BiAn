@@ -4,13 +4,14 @@ import android.app.Application
 import android.util.Log
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
-import com.aidaole.bian.data.entity.FeedPost
 import com.aidaole.bian.data.entity.FeedTab
-import com.aidaole.bian.features.home.data.FeedTabInfo
-import com.aidaole.bian.features.home.data.StockItem
+import com.aidaole.bian.data.entity.StockItem
+import com.aidaole.bian.data.repo.FeedRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import kotlinx.serialization.json.Json
 import javax.inject.Inject
 
@@ -18,7 +19,8 @@ private const val TAG = "HomeViewModel"
 
 @HiltViewModel
 class HomeViewModel @Inject constructor(
-    private val application: Application
+    private val application: Application,
+    private val feedRepository: FeedRepository
 ) : AndroidViewModel(
     application = application
 ) {
@@ -35,11 +37,6 @@ class HomeViewModel @Inject constructor(
     )
 
     val homeFeedTabs = MutableStateFlow<List<FeedTab>>(listOf())
-    private val json = Json {
-        ignoreUnknownKeys = true
-        isLenient = true
-        prettyPrint = false
-    }
 
     init {
         loadFeedTabContents()
@@ -47,12 +44,9 @@ class HomeViewModel @Inject constructor(
 
     private fun loadFeedTabContents() {
         viewModelScope.launch {
-            val jsonString = application.assets.open("crypto_news_mock_tabs.json").bufferedReader()
-                .use { it.readText() }
-            val feeds = json.decodeFromString<List<FeedTab>>(jsonString)
-            homeFeedTabs.value = feeds
-
-            homeFeedTabs.value.forEach {
+            homeFeedTabs.value = withContext(Dispatchers.IO) {
+                feedRepository.getFeedPosts()
+            }.onEach {
                 Log.d(TAG, "loadFeedTabContents: ${it.tabName}")
                 Log.d(TAG, "loadFeedTabContents: ${it.contents.size}")
             }

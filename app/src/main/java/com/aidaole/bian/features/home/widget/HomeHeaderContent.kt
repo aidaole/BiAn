@@ -1,6 +1,5 @@
 package com.aidaole.bian.features.home.widget
 
-import android.util.Log
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -27,7 +26,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.aidaole.bian.core.theme.StockDownColor
 import com.aidaole.bian.core.theme.StockUpColor
-import com.aidaole.bian.features.home.data.StockItem
+import com.aidaole.bian.data.entity.StockItem
 
 private const val TAG = "HeaderContent"
 

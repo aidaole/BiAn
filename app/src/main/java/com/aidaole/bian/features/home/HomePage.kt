@@ -35,6 +35,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.aidaole.bian.R
+import com.aidaole.bian.data.repo.fake.FakeFeedRepository
 import com.aidaole.bian.features.home.widget.FeedListPagers
 import com.aidaole.bian.features.home.widget.HomeAppBar
 import com.aidaole.bian.features.home.widget.HomeHeaderContent
@@ -49,7 +50,7 @@ private fun HomePagePreview() {
         Column {
             Spacer(Modifier.height(30.dp))
             HomePage(
-                homeViewModel = HomeViewModel(Application()),
+                homeViewModel = HomeViewModel(Application(), FakeFeedRepository(Application())),
             )
         }
 
