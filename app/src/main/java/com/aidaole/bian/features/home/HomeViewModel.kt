@@ -9,6 +9,7 @@ import com.aidaole.bian.data.entity.StockItem
 import com.aidaole.bian.data.repo.FeedRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -19,27 +20,25 @@ private const val TAG = "HomeViewModel"
 
 @HiltViewModel
 class HomeViewModel @Inject constructor(
-    private val application: Application,
-    private val feedRepository: FeedRepository
+    private val application: Application, private val feedRepository: FeedRepository
 ) : AndroidViewModel(
     application = application
 ) {
 
-    val stockItems = MutableStateFlow(
-        listOf(
-            StockItem("BNB", true, 604.28F, 4411.24F, -1.78F),
-            StockItem("BTC", true, 93196.73F, 680336.24F, 0.38F),
-            StockItem("BTC", true, 93196.73F, 680336.24F, 0.38F),
-            StockItem("BTC", true, 93196.73F, 680336.24F, 0.38F),
-            StockItem("BTC", true, 93196.73F, 680336.24F, 0.38F),
-            StockItem("BTC", true, 93196.73F, 680336.24F, 0.38F),
-        )
-    )
-
-    val homeFeedTabs = MutableStateFlow<List<FeedTab>>(listOf())
+    val stockItems = MutableStateFlow<List<StockItem>>(emptyList())
+    val homeFeedTabs = MutableStateFlow<List<FeedTab>>(emptyList())
 
     init {
+        loadStockItems()
         loadFeedTabContents()
+    }
+
+    private fun loadStockItems() {
+        viewModelScope.launch {
+            stockItems.value = withContext(Dispatchers.IO) {
+                feedRepository.getHomeStocks()
+            }
+        }
     }
 
     private fun loadFeedTabContents() {
